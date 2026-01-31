@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { GraphNode } from '../../types';
 import { BaseNode } from './BaseNode';
+import ReactMarkdown from 'react-markdown';
 
 export function FullNode({ data }: NodeProps<GraphNode>) {
     const { isSelected, isHighlighted, isOnActiveBranch, treeNode } = data;
@@ -23,8 +24,11 @@ export function FullNode({ data }: NodeProps<GraphNode>) {
                             </span>
                         )}
                     </div>
-                    <div className="text-sm text-slate-800 whitespace-pre-wrap overflow-y-auto flex-1 leading-relaxed min-h-0">
-                        {treeNode.content || (
+                    {/* Added nodrag class to allow text selection without panning */}
+                    <div className="nodrag text-sm text-slate-800 overflow-y-auto flex-1 leading-relaxed min-h-0 cursor-text select-text prose prose-sm max-w-none">
+                        {treeNode.content ? (
+                            <ReactMarkdown>{treeNode.content}</ReactMarkdown>
+                        ) : (
                             <span className="text-slate-400 italic">Empty message</span>
                         )}
                     </div>

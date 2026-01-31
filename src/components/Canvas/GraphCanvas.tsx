@@ -40,10 +40,10 @@ function GraphCanvasInner() {
 
     // Use centralized zoom level hook
     const zoomLevel = useZoomLevel();
-    const { fitView, setCenter, getZoom } = useReactFlow();
+    const { fitView, setCenter, getZoom, zoomTo, getViewport, setViewport } = useReactFlow();
     const prevNodeCount = useRef(0);
     const lastPannedId = useRef<string | null>(null);
-    const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
 
     // Compute active branch path for focused node
     const activeBranch = useMemo(() => {
@@ -92,32 +92,19 @@ function GraphCanvasInner() {
 
     const onNodeClick: NodeMouseHandler = useCallback(
         (_event, node) => {
-            // Cancel any pending single click timeout
-            if (clickTimeoutRef.current) {
-                clearTimeout(clickTimeoutRef.current);
-                clickTimeoutRef.current = null;
-                return; // Let the double click handler take over
-            }
-
-            // Start a timeout for single click
-            clickTimeoutRef.current = setTimeout(() => {
-                toggleHighlight(node.id);
-                clickTimeoutRef.current = null;
-            }, 250); // 250ms delay to distinguish from double click
-        },
-        [toggleHighlight]
-    );
-
-    const onNodeDoubleClick: NodeMouseHandler = useCallback(
-        (_event, node) => {
-            // Ensure single click timeout is cleared
-            if (clickTimeoutRef.current) {
-                clearTimeout(clickTimeoutRef.current);
-                clickTimeoutRef.current = null;
-            }
             focusNode(node.id);
         },
         [focusNode]
+    );
+
+    const onNodeContextMenu: NodeMouseHandler = useCallback(
+        (event, node) => {
+            event.preventDefault();
+            // Prevent context menu action if we just finished zooming
+            if (hasZoomed.current) return;
+            toggleHighlight(node.id);
+        },
+        [toggleHighlight]
     );
 
     const onEdgeClick = useCallback(
@@ -153,18 +140,115 @@ function GraphCanvasInner() {
         prevNodeCount.current = currentCount;
     }, [nodes, fitView]);
 
+    // Custom Zoom Logic
+    const isZooming = useRef(false);
+    const zoomStartMouseY = useRef(0);
+    const zoomStartLevel = useRef(1);
+    const hasZoomed = useRef(false);
+    const zoomMouseX = useRef(0);
+    const zoomMouseY = useRef(0);
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isZooming.current) return;
+
+            // Safety check: if right mouse button is not held, stop zooming
+            if ((e.buttons & 2) === 0) {
+                isZooming.current = false;
+                return;
+            }
+
+            const deltaY = zoomStartMouseY.current - e.clientY;
+
+            // Only consider it a zoom action if moved significantly or if already zooming
+            if (!hasZoomed.current && Math.abs(deltaY) > 5) {
+                hasZoomed.current = true;
+            }
+
+            if (hasZoomed.current) {
+                // Dragging UP (positive delta) -> Zoom In
+                const sensitivity = 0.0015;
+                const newZoom = zoomStartLevel.current * Math.exp(deltaY * sensitivity);
+                // Clamp zoom to reasonable limits (matching minZoom/maxZoom props)
+                const clampedZoom = Math.min(Math.max(newZoom, 0.1), 2.5);
+
+
+                // Zoom to cursor position
+                const viewport = getViewport();
+                const { x: viewportX, y: viewportY, zoom: currentZoom } = viewport;
+
+                // Calculate the position of the mouse in the flow coordinate system
+                const mouseXInFlow = (zoomMouseX.current - viewportX) / currentZoom;
+                const mouseYInFlow = (zoomMouseY.current - viewportY) / currentZoom;
+
+                // Calculate new viewport position to keep the mouse at the same point
+                const newViewportX = zoomMouseX.current - mouseXInFlow * clampedZoom;
+                const newViewportY = zoomMouseY.current - mouseYInFlow * clampedZoom;
+
+                setViewport({ x: newViewportX, y: newViewportY, zoom: clampedZoom }, { duration: 0 });
+            }
+        };
+
+        const handleMouseUp = () => {
+            isZooming.current = false;
+        };
+
+        const handleContextMenu = (e: MouseEvent) => {
+            // Prevent context menu if we're zooming or have zoomed
+            if (isZooming.current || hasZoomed.current) {
+                e.preventDefault();
+            }
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        window.addEventListener('contextmenu', handleContextMenu);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener('contextmenu', handleContextMenu);
+        };
+    }, [zoomTo]);
+
+    const onMouseDown = useCallback((e: React.MouseEvent) => {
+        // Check for Right Click (button 2)
+        if (e.button === 2) {
+            e.preventDefault(); // Prevent context menu from opening
+            isZooming.current = true;
+            zoomStartMouseY.current = e.clientY;
+            zoomStartLevel.current = getZoom();
+            hasZoomed.current = false;
+            // Store the mouse position for zoom-to-cursor
+            zoomMouseX.current = e.clientX;
+            zoomMouseY.current = e.clientY;
+        }
+    }, [getZoom]);
+
+    const onPaneContextMenu = useCallback(
+        (event: any) => {
+            if (hasZoomed.current) {
+                event.preventDefault();
+            }
+        },
+        []
+    );
+
     return (
         <ReactFlow
             nodes={flowNodes}
             edges={flowEdges}
             nodeTypes={nodeTypes}
             onNodeClick={onNodeClick}
-            onNodeDoubleClick={onNodeDoubleClick}
+            onNodeContextMenu={onNodeContextMenu}
+            onPaneContextMenu={onPaneContextMenu}
             onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
             onMoveStart={onMoveStart}
-            panOnScroll={false}
-            zoomOnScroll={true}
+            onMouseDown={onMouseDown}
+            panOnScroll={true}
+            zoomOnScroll={false}
+            panOnDrag={[0]} // Only left click pans
             minZoom={0.1}
             maxZoom={2}
             proOptions={{ hideAttribution: true }}

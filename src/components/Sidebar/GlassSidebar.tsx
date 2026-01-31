@@ -11,6 +11,7 @@ export function GlassSidebar() {
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const editInputRef = useRef<HTMLInputElement>(null);
 
@@ -80,6 +81,7 @@ export function GlassSidebar() {
     };
 
     const handleCreateSession = () => {
+        setIsCollapsed(false);
         if (currentSessionId) {
             const currentState = useTreeStore.getState();
             localStorage.setItem(`spectra-tree-${currentSessionId}`, JSON.stringify({
@@ -120,12 +122,34 @@ export function GlassSidebar() {
     });
 
     return (
-        <div className="fixed top-6 left-6 w-64 h-[calc(100vh-3rem)] z-50 pointer-events-none flex flex-col gap-4">
+        <div
+            className={`
+                fixed top-6 left-6 w-64 z-50 pointer-events-none flex flex-col gap-4
+                transition-[height] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]
+                ${isCollapsed ? 'h-[72px]' : 'h-[calc(100vh-3rem)]'}
+            `}
+        >
             {/* Main Container */}
             <div className="glass w-full h-full pointer-events-auto flex flex-col p-4 overflow-hidden relative">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-slate-800 font-bold tracking-wider text-lg font-display">SPECTRA</h1>
+                <div className="flex items-center justify-between mb-6 flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-slate-800 font-bold tracking-wider text-lg font-display">SPECTRA</h1>
+                        <button
+                            onClick={() => setIsCollapsed(!isCollapsed)}
+                            className="p-1 rounded-md hover:bg-black/5 text-slate-400 hover:text-indigo-600 transition-colors"
+                            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                        >
+                            <svg
+                                className={`w-4 h-4 transition-transform duration-500 ${isCollapsed ? 'rotate-180' : ''}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                        </button>
+                    </div>
                     <button
                         onClick={handleCreateSession}
                         className="p-1.5 rounded-lg bg-white/40 hover:bg-white/60 text-slate-700 hover:text-indigo-600 transition-all shadow-sm"
@@ -138,7 +162,11 @@ export function GlassSidebar() {
                 </div>
 
                 {/* Session List */}
-                <div className="flex-1 overflow-y-auto -mx-2 px-2 pb-2 space-y-1 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                <div className={`
+                    flex-1 overflow-y-auto -mx-2 px-2 pb-2 space-y-1 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent
+                    transition-opacity duration-300 delay-100
+                    ${isCollapsed ? 'opacity-0 invisible' : 'opacity-100 visible'}
+                `}>
                     {sortedSessions.map(session => (
                         <div
                             key={session.id}

@@ -17,7 +17,7 @@ export function BaseNode({
         <div className="relative isolate group w-full h-full">
             {/* Outer Glow - Lighter, more etherial Sky Blue */}
             {isHighlighted && (
-                <div className="absolute -inset-4 bg-sky-400/20 rounded-xl blur-xl -z-20 transition-all duration-500" />
+                <div className="absolute inset-0 rounded-xl shadow-[0_0_30px_5px_rgba(56,189,248,0.4)] -z-20 transition-all duration-500" />
             )}
 
 

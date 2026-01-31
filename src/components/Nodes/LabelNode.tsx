@@ -13,7 +13,7 @@ export function LabelNode({ data }: NodeProps<GraphNode>) {
             <div className="relative isolate w-fit group">
                 {/* Outer Glow */}
                 {isHighlighted && (
-                    <div className="absolute -inset-3 bg-sky-400/30 rounded-full blur-lg -z-20 transition-all duration-500" />
+                    <div className="absolute inset-0 rounded-full shadow-[0_0_25px_5px_rgba(56,189,248,0.4)] -z-20 transition-all duration-500" />
                 )}
 
                 {/* Gradient Outline */}

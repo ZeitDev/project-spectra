@@ -163,7 +163,7 @@ export function GlassSidebar() {
 
                 {/* Session List */}
                 <div className={`
-                    flex-1 overflow-y-auto -mx-2 px-2 pb-2 space-y-1 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent
+                    flex-1 overflow-y-auto -mx-2 px-2 pb-2 space-y-1 gradient-scrollbar
                     transition-opacity duration-300 delay-100
                     ${isCollapsed ? 'opacity-0 invisible' : 'opacity-100 visible'}
                 `}>

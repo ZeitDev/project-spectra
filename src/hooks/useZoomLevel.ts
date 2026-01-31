@@ -18,9 +18,9 @@ export function useZoomLevel(): ZoomLevel {
         ({ zoom }: { zoom: number }) => {
             let level: ZoomLevel;
 
-            if (zoom < 0.4) {
+            if (zoom < 0.2) {
                 level = 0;
-            } else if (zoom < 0.5) {
+            } else if (zoom < 0.4) {
                 level = 1;
             } else if (zoom < 0.6) {
                 level = 2;

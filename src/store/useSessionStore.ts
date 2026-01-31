@@ -9,6 +9,7 @@ interface SessionState {
     switchSession: (sessionId: string) => void;
     deleteSession: (sessionId: string) => void;
     updateSessionName: (sessionId: string, name: string) => void;
+    togglePinSession: (sessionId: string) => void;
 }
 
 const generateId = () => crypto.randomUUID();
@@ -72,6 +73,14 @@ export const useSessionStore = create<SessionState>()(
                 set((state) => ({
                     sessions: state.sessions.map((s) =>
                         s.id === sessionId ? { ...s, name, updatedAt: Date.now() } : s
+                    ),
+                }));
+            },
+
+            togglePinSession: (sessionId) => {
+                set((state) => ({
+                    sessions: state.sessions.map((s) =>
+                        s.id === sessionId ? { ...s, isPinned: !s.isPinned } : s
                     ),
                 }));
             },

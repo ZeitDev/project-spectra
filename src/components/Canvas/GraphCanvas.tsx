@@ -158,16 +158,34 @@ function GraphCanvasInner() {
                 size={1}
                 color="rgba(139, 92, 246, 0.15)"
             />
+
         </ReactFlow>
     );
 }
 
 export function GraphCanvas() {
     return (
-        <div className="w-full h-full">
+        <div className="w-full h-full relative">
             <ReactFlowProvider>
                 <GraphCanvasInner />
             </ReactFlowProvider>
+
+            {/* Prismatic Gradient Definition for Edges - Global SVG */}
+            <svg style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0, pointerEvents: 'none' }}>
+                <defs>
+                    <linearGradient
+                        id="prismatic-gradient"
+                        gradientUnits="userSpaceOnUse"
+                        x1="0" y1="0"
+                        x2="1000" y2="1000"
+                        spreadMethod="repeat"
+                    >
+                        <stop offset="0%" stopColor="#1e1b4b" />   {/* Indigo-950 */}
+                        <stop offset="50%" stopColor="#38bdf8" />   {/* Sky-400 */}
+                        <stop offset="100%" stopColor="#a855f7" />  {/* Purple-500 */}
+                    </linearGradient>
+                </defs>
+            </svg>
         </div>
     );
 }

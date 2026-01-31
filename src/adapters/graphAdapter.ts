@@ -73,9 +73,11 @@ export function treeToReactFlow(
                 target: childId,
                 style: {
                     opacity: isDimmed ? 0.1 : 1,
-                    stroke: isHighlightedEdge ? '#38bdf8' : (isOnBranch ? '#6366f1' : '#cbd5e1'), // Sky-400 (highlight), Indigo-500 (active), Slate-300 (inactive)
-                    strokeWidth: isHighlightedEdge ? 3 : (isOnBranch ? 2 : 1),
-                    filter: isHighlightedEdge ? 'drop-shadow(0 0 6px #7dd3fc)' : undefined, // Sky-300 glow
+                    // Use the prismatic gradient for all active/highlighted branches
+                    stroke: (isHighlightedEdge || isOnBranch) ? 'url(#prismatic-gradient)' : '#cbd5e1',
+                    // Thicker branches: 4px for highlight (was 3), 3px for active (was 2), 1px inactive
+                    strokeWidth: isHighlightedEdge ? 4 : (isOnBranch ? 3 : 1),
+                    filter: isHighlightedEdge ? 'drop-shadow(0 0 4px rgba(56, 189, 248, 0.5))' : undefined,
                 },
                 animated: false,
             });

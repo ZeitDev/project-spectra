@@ -107,7 +107,7 @@ export function GlassConsole() {
                             onKeyDown={handleKeyDown}
                             placeholder="Type a message..."
                             rows={1}
-                            className="flex-1 resize-none bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 text-base leading-relaxed py-2 max-h-[calc(100vh-12rem)] overflow-y-auto gradient-scrollbar"
+                            className="flex-1 resize-none bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 text-base leading-relaxed py-2 pr-3 max-h-[calc(100vh-6.5rem)] overflow-y-auto gradient-scrollbar"
                         />
 
                         {/* Model switcher button */}

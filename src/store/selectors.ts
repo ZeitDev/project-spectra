@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useTreeStore } from './useTreeStore';
 import type { TreeNode } from '../types';
-import { shallow } from 'zustand/shallow';
 
 /**
  * Get all ancestor IDs from root to the given node (inclusive)
@@ -11,7 +10,7 @@ export const getAncestorPath = (
     nodeId: string
 ): string[] => {
     const path: string[] = [];
-    let current = nodes[nodeId];
+    let current: TreeNode | undefined = nodes[nodeId];
 
     while (current) {
         path.unshift(current.id);
@@ -26,8 +25,8 @@ export const getAncestorPath = (
  */
 export const useSelectedNode = () => {
     return useTreeStore((state) => {
-        if (!state.selectedNodeId) return null;
-        return state.nodes[state.selectedNodeId] ?? null;
+        if (!state.focusedNodeId) return null;
+        return state.nodes[state.focusedNodeId] ?? null;
     });
 };
 
@@ -37,9 +36,9 @@ export const useSelectedNode = () => {
  */
 export const useActiveBranchPath = (): string[] => {
     return useTreeStore((state) => {
-        if (!state.selectedNodeId) return [];
-        return getAncestorPath(state.nodes, state.selectedNodeId);
-    }, shallow);
+        if (!state.focusedNodeId) return [];
+        return getAncestorPath(state.nodes, state.focusedNodeId);
+    });
 };
 
 /**

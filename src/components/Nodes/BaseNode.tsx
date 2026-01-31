@@ -14,23 +14,26 @@ export function BaseNode({
     isOnActiveBranch,
 }: BaseNodeProps) {
     return (
-        <div className="relative isolate">
-            {/* Outer Glow */}
+        <div className="relative isolate group">
+            {/* Outer Glow - Lighter, more etherial Sky Blue */}
             {isHighlighted && (
-                <div className="absolute -inset-4 bg-violet-600/40 rounded-xl blur-xl -z-20 transition-all duration-500" />
+                <div className="absolute -inset-4 bg-sky-400/20 rounded-xl blur-xl -z-20 transition-all duration-500" />
             )}
 
-            {/* Gradient Outline */}
-            <div className="absolute -inset-[2px] rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 -z-10 opacity-100" />
+
 
             {/* Main Content */}
             <div
                 className={`
-        glass-node node-transition rounded-xl h-full relative
+        glass-node node-transition rounded-xl h-full relative overflow-hidden
+        text-slate-900 
         ${isSelected ? 'glass-node-selected' : ''}
         ${!isOnActiveBranch && isSelected ? '' : ''}
       `}
             >
+                {/* Inner shine for extra "glass" feel - Reduced opacity */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
+
                 {children}
             </div>
         </div>

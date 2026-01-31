@@ -5,7 +5,7 @@ import { useSelectedNode } from '../../store/selectors';
 export function GlassConsole() {
     const [input, setInput] = useState('');
     const selectedNode = useSelectedNode();
-    const selectedNodeId = useTreeStore((state) => state.selectedNodeId);
+    const selectedNodeId = useTreeStore((state) => state.focusedNodeId);
     const addNode = useTreeStore((state) => state.addNode);
 
     const handleSubmit = useCallback(
@@ -38,9 +38,9 @@ export function GlassConsole() {
     return (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50">
             <form onSubmit={handleSubmit}>
-                <div className="glass rounded-2xl shadow-2xl p-4">
+                <div className="glass rounded-2xl p-4 transition-all duration-300">
                     {/* Context indicator */}
-                    <div className="text-xs text-slate-500 mb-2 truncate">
+                    <div className="text-xs text-slate-600 mb-2 truncate font-medium ml-1">
                         {contextLabel}
                     </div>
 
@@ -58,7 +58,7 @@ export function GlassConsole() {
                         <button
                             type="submit"
                             disabled={!input.trim()}
-                            className="flex-shrink-0 w-10 h-10 rounded-xl bg-violet-500 hover:bg-violet-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                            className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 shadow-lg shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center text-white"
                         >
                             <svg
                                 className="w-5 h-5 text-white"

@@ -6,7 +6,7 @@ export function PreviewNode({ data }: NodeProps<GraphNode>) {
     const { isSelected, isHighlighted, isOnActiveBranch, treeNode } = data;
 
     const roleLabel = treeNode.role === 'user' ? 'You' : 'AI';
-    const roleColor = treeNode.role === 'user' ? 'text-violet-600' : 'text-emerald-600';
+    const roleColor = treeNode.role === 'user' ? 'text-indigo-600' : 'text-emerald-600';
 
     // Get first 2 lines of content
     const lines = treeNode.content.split('\n').slice(0, 2);

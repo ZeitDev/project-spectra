@@ -2,15 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Aurora Gradient Background */
+/* Prismatic Light Glass Variables */
 :root {
-    --aurora-1: #ffffff;
-    --aurora-2: #e0f2fe;
-    /* pale blue */
-    --aurora-3: #ede9fe;
-    /* soft violet */
-    --aurora-4: #f3e8ff;
-    /* soft purple */
+    /* Background Base: Bright, almost pure white */
+    --aurora-1: #F8FAFC;
+    /* Slate-50 - cooler white */
+
+    /* Accents: Liquid mesh gradients - Shifting to Blue/Sky */
+    /* Light Sky Blue */
+    --aurora-2: #E0F2FE;
+    /* Soft Blue/Indigo (reduced violet) */
+    --aurora-3: #E0E7FF;
+    /* Pure white for refraction */
+    --aurora-4: #FFFFFF;
 }
 
 * {
@@ -29,43 +33,114 @@ body,
 
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+    /* Deep charcoal for default text */
 }
 
-/* Aurora Mesh Gradient */
+/* Prismatic Liquid Mesh Gradient */
 .aurora-background {
-    background:
-        radial-gradient(ellipse at 0% 0%, var(--aurora-2) 0%, transparent 50%),
-        radial-gradient(ellipse at 100% 0%, var(--aurora-3) 0%, transparent 50%),
-        radial-gradient(ellipse at 100% 100%, var(--aurora-4) 0%, transparent 50%),
-        radial-gradient(ellipse at 0% 100%, var(--aurora-2) 0%, transparent 50%),
-        var(--aurora-1);
+    background-color: var(--aurora-1);
+    background-image:
+        radial-gradient(circle at 15% 15%, var(--aurora-2) 40%, transparent 60%),
+        radial-gradient(circle at 85% 10%, var(--aurora-3) 40%, transparent 60%),
+        radial-gradient(circle at 50% 50%, #ffffff 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, var(--aurora-2) 40%, transparent 60%),
+        radial-gradient(circle at 0% 100%, var(--aurora-3) 40%, transparent 60%);
     background-attachment: fixed;
 }
 
-/* Glassmorphism Utilities */
+/* Glassmorphism Utilities: "Frosted Ice" */
+/* Glassmorphism Utilities: "Frosted Ice" */
 .glass {
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    /* Reflective Sheen + Transparent Base */
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.25) 0%,
+            rgba(255, 255, 255, 0.05) 40%,
+            rgba(255, 255, 255, 0) 100%);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border-radius: 1rem;
+
+    /* Deep Glass Shadow + Crisp Rim Light */
+    box-shadow:
+        0 8px 32px 0 rgba(31, 38, 135, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+        /* Top lighting */
+        inset 0 0 20px 0 rgba(255, 255, 255, 0.1);
+    /* Inner depth */
+}
+
+.glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem;
+    padding: 2px;
+    /* Border width */
+    background: linear-gradient(135deg, #1e1b4b 0%, #38bdf8 50%, #a855f7 100%);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
 }
 
 .glass-node {
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    position: relative;
+    /* Reflective Sheen + Transparent Base (slightly stronger for nodes) */
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.3) 0%,
+            rgba(255, 255, 255, 0.1) 40%,
+            rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(30px);
+    /* Slightly less blur for readability */
+    -webkit-backdrop-filter: blur(30px);
+
+    /* We expect rounded-xl (0.75rem) usually, matching utility. */
+    border-radius: 0.75rem;
+
+    /* Deep Glass Shadow + Crisp Rim Light */
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+        /* Stronger Top lighting */
+        inset 0 0 20px 0 rgba(255, 255, 255, 0.1);
+    /* Inner depth */
+}
+
+.glass-node::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 0.75rem;
+    /* Match parent */
+    padding: 2px;
+    /* Border width */
+    background: linear-gradient(135deg, #1e1b4b 0%, #38bdf8 50%, #a855f7 100%);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
 }
 
 .glass-node-selected {
-    border: 2px solid rgba(139, 92, 246, 0.6);
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+    /* Selected state: Blue/Indigo glow instead of violet */
+    border-color: rgba(99, 102, 241, 0.5);
+    /* Indigo-500 equivalent */
+    box-shadow:
+        0 10px 25px -5px rgba(99, 102, 241, 0.15),
+        0 0 0 1px rgba(99, 102, 241, 0.2) inset;
 }
 
 /* Node transition animations */
 .node-transition {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    /* Smoother, "apple-like" easing */
 }
 
 /* React Flow overrides */
@@ -79,7 +154,6 @@ body {
 
 .react-flow__controls {
     display: none;
-    /* Hide default controls for clean UI */
 }
 
 .react-flow__attribution {

@@ -4,20 +4,20 @@ import type { GraphNode } from '../../types';
 export function LabelNode({ data }: NodeProps<GraphNode>) {
     const { isSelected, isHighlighted, isOnActiveBranch, treeNode } = data;
 
-    const bgColor = treeNode.role === 'user' ? 'bg-violet-400' : 'bg-emerald-400';
+    const bgColor = treeNode.role === 'user' ? 'bg-indigo-400' : 'bg-emerald-400';
     const label = treeNode.label || treeNode.content.slice(0, 20) + (treeNode.content.length > 20 ? '...' : '');
 
     return (
         <>
             <Handle type="target" position={Position.Top} className="opacity-0" />
-            <div className="relative isolate w-fit">
+            <div className="relative isolate w-fit group">
                 {/* Outer Glow */}
                 {isHighlighted && (
-                    <div className="absolute -inset-3 bg-violet-600/50 rounded-full blur-lg -z-20" />
+                    <div className="absolute -inset-3 bg-sky-400/30 rounded-full blur-lg -z-20 transition-all duration-500" />
                 )}
 
                 {/* Gradient Outline */}
-                <div className="absolute -inset-[2px] rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 -z-10" />
+                <div className="absolute -inset-[1px] rounded-full bg-gradient-to-tr from-sky-200 via-indigo-200 to-sky-200 -z-10" />
 
                 <div
                     className={`

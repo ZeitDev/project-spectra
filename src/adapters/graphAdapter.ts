@@ -73,9 +73,9 @@ export function treeToReactFlow(
                 target: childId,
                 style: {
                     opacity: isDimmed ? 0.1 : 1,
-                    stroke: isHighlightedEdge ? '#d8b4fe' : (isOnBranch ? '#8b5cf6' : '#94a3b8'), // Lighter violet for highlight
+                    stroke: isHighlightedEdge ? '#38bdf8' : (isOnBranch ? '#6366f1' : '#cbd5e1'), // Sky-400 (highlight), Indigo-500 (active), Slate-300 (inactive)
                     strokeWidth: isHighlightedEdge ? 3 : (isOnBranch ? 2 : 1),
-                    filter: isHighlightedEdge ? 'drop-shadow(0 0 6px #a78bfa)' : undefined,
+                    filter: isHighlightedEdge ? 'drop-shadow(0 0 6px #7dd3fc)' : undefined, // Sky-300 glow
                 },
                 animated: false,
             });

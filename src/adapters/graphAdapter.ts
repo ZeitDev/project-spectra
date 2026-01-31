@@ -56,7 +56,7 @@ export function treeToReactFlow(
         const estimatedHeight = BASE_CHROME_HEIGHT + (totalVisualLines * LINE_HEIGHT);
 
         // Clamp between 200 and 1200 to prevent extremes
-        return Math.max(200, Math.min(1600, estimatedHeight));
+        return Math.max(200, Math.min(3000, estimatedHeight));
     }
 
     // Temporary storage for layout positions

@@ -32,7 +32,9 @@ export interface TreeActions {
         content: string
     ) => string;
     focusNode: (nodeId: string | null) => void;
+    setLastFocusedNode: (nodeId: string | null) => void;
     toggleHighlight: (nodeId: string) => void;
+    highlightBranch: (nodeId: string) => void;
     clearHighlights: () => void;
     deleteNode: (nodeId: string) => void;
     updateNodeContent: (nodeId: string, content: string) => void;

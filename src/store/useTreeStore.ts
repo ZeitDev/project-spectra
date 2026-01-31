@@ -58,7 +58,11 @@ export const useTreeStore = create<TreeStore>()(
                 }));
             },
 
-            toggleHighlight: (nodeId) => {
+            setLastFocusedNode: (nodeId) => {
+                set({ lastFocusedNodeId: nodeId });
+            },
+
+            toggleHighlight: (nodeId: string) => {
                 set((state) => {
                     const isHighlighted = state.highlightedNodeIds.includes(nodeId);
                     return {
@@ -66,6 +70,21 @@ export const useTreeStore = create<TreeStore>()(
                             ? state.highlightedNodeIds.filter((id) => id !== nodeId)
                             : [...state.highlightedNodeIds, nodeId],
                     };
+                });
+            },
+
+            highlightBranch: (nodeId) => {
+                const state = get();
+                const collectDescendants = (id: string): string[] => {
+                    const node = state.nodes[id];
+                    if (!node) return [];
+                    return [id, ...node.children.flatMap(collectDescendants)];
+                };
+
+                const branchIds = collectDescendants(nodeId);
+                set((state) => {
+                    const newHighlighted = new Set([...state.highlightedNodeIds, ...branchIds]);
+                    return { highlightedNodeIds: Array.from(newHighlighted) };
                 });
             },
 

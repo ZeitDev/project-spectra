@@ -34,7 +34,9 @@ function GraphCanvasInner() {
         focusedNodeId,
         highlightedNodeIds,
         focusNode,
+        setLastFocusedNode,
         toggleHighlight,
+        highlightBranch,
         clearHighlights
     } = store;
 
@@ -92,9 +94,12 @@ function GraphCanvasInner() {
 
     const onNodeClick: NodeMouseHandler = useCallback(
         (_event, node) => {
-            focusNode(node.id);
+            focusNode(null);
+            setLastFocusedNode(node.id);
+            clearHighlights();
+            toggleHighlight(node.id);
         },
-        [focusNode]
+        [focusNode, setLastFocusedNode, clearHighlights, toggleHighlight]
     );
 
     const onNodeContextMenu: NodeMouseHandler = useCallback(
@@ -102,16 +107,34 @@ function GraphCanvasInner() {
             event.preventDefault();
             // Prevent context menu action if we just finished zooming
             if (hasZoomed.current) return;
+            // Single RMB multiselects every node clicked
             toggleHighlight(node.id);
         },
         [toggleHighlight]
     );
 
+    const onNodeDoubleClick: NodeMouseHandler = useCallback(
+        (_event, node) => {
+            focusNode(node.id);
+            highlightBranch(node.id);
+        },
+        [focusNode, highlightBranch]
+    );
+
     const onEdgeClick = useCallback(
         (_event: React.MouseEvent, edge: any) => {
-            toggleHighlight(edge.target);
+            // RMB on edge is not explicitly requested, but for symmetry we can toggle highlight
+            // However, the request says "Single RMB multiselects every node clicked"
+            // Let's stick to the requirements.
         },
-        [toggleHighlight]
+        []
+    );
+
+    const onEdgeDoubleClick = useCallback(
+        (_event: React.MouseEvent, edge: any) => {
+            highlightBranch(edge.target);
+        },
+        [highlightBranch]
     );
 
     const onPaneClick = useCallback(() => {
@@ -240,9 +263,11 @@ function GraphCanvasInner() {
             edges={flowEdges}
             nodeTypes={nodeTypes}
             onNodeClick={onNodeClick}
+            onNodeDoubleClick={onNodeDoubleClick}
             onNodeContextMenu={onNodeContextMenu}
             onPaneContextMenu={onPaneContextMenu}
             onEdgeClick={onEdgeClick}
+            onEdgeDoubleClick={onEdgeDoubleClick}
             onPaneClick={onPaneClick}
             onMoveStart={onMoveStart}
             onMouseDown={onMouseDown}

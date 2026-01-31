@@ -57,6 +57,21 @@ export const useAllNodes = () => {
 };
 
 /**
+ * Get the effective parent ID for new messages (focused node or last focused node)
+ */
+export const useEffectiveParentId = (): string | null => {
+    return useTreeStore((state) => state.focusedNodeId ?? state.lastFocusedNodeId);
+};
+
+/**
+ * Get the effective parent node
+ */
+export const useEffectiveParentNode = () => {
+    const effectiveId = useEffectiveParentId();
+    return useTreeStore((state) => (effectiveId ? state.nodes[effectiveId] : null));
+};
+
+/**
  * Get node count
  */
 export const useNodeCount = () => {

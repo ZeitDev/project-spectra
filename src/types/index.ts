@@ -20,6 +20,7 @@ export interface TreeState {
     nodes: Record<string, TreeNode>; // Flat map for O(1) lookup
     rootId: string | null;
     focusedNodeId: string | null; // For Focus Mode
+    lastFocusedNodeId: string | null; // For Selection Continuity
     highlightedNodeIds: string[]; // For multi-select glowing
 }
 

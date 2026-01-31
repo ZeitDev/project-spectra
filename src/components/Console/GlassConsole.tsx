@@ -1,11 +1,12 @@
 import { useState, useCallback, type KeyboardEvent, type FormEvent } from 'react';
 import { useTreeStore } from '../../store/useTreeStore';
-import { useSelectedNode } from '../../store/selectors';
+import { useEffectiveParentId, useEffectiveParentNode } from '../../store/selectors';
 
 export function GlassConsole() {
     const [input, setInput] = useState('');
-    const selectedNode = useSelectedNode();
-    const selectedNodeId = useTreeStore((state) => state.focusedNodeId);
+    const effectiveParent = useEffectiveParentNode();
+    const effectiveParentId = useEffectiveParentId();
+    const focusedNodeId = useTreeStore((state) => state.focusedNodeId);
     const addNode = useTreeStore((state) => state.addNode);
 
     const handleSubmit = useCallback(
@@ -14,11 +15,11 @@ export function GlassConsole() {
             const trimmed = input.trim();
             if (!trimmed) return;
 
-            // Add as child of selected node, or as root if nothing selected
-            addNode(selectedNodeId, 'user', trimmed);
+            // Add as child of effective parent (focused node or last selected)
+            addNode(effectiveParentId, 'user', trimmed);
             setInput('');
         },
-        [input, selectedNodeId, addNode]
+        [input, effectiveParentId, addNode]
     );
 
     const handleKeyDown = useCallback(
@@ -31,8 +32,10 @@ export function GlassConsole() {
         [handleSubmit]
     );
 
-    const contextLabel = selectedNode
-        ? `Replying to: "${selectedNode.content.slice(0, 40)}${selectedNode.content.length > 40 ? '...' : ''}"`
+    const contextLabel = effectiveParent
+        ? focusedNodeId
+            ? `Replying to: "${effectiveParent.content.slice(0, 40)}${effectiveParent.content.length > 40 ? '...' : ''}"`
+            : `Continuing on: "${effectiveParent.content.slice(0, 40)}${effectiveParent.content.length > 40 ? '...' : ''}"`
         : 'Start a new conversation';
 
     return (

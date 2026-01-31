@@ -11,6 +11,7 @@ export const useTreeStore = create<TreeStore>()(
             nodes: {},
             rootId: null,
             focusedNodeId: null,
+            lastFocusedNodeId: null,
             highlightedNodeIds: [],
 
             // Actions
@@ -42,6 +43,7 @@ export const useTreeStore = create<TreeStore>()(
                         nodes: newNodes,
                         rootId: parentId === null ? id : state.rootId,
                         focusedNodeId: id, // Focus new message
+                        lastFocusedNodeId: id, // Track latest
                         highlightedNodeIds: [id], // Highlight new message
                     };
                 });
@@ -50,7 +52,10 @@ export const useTreeStore = create<TreeStore>()(
             },
 
             focusNode: (nodeId) => {
-                set({ focusedNodeId: nodeId });
+                set((state) => ({
+                    focusedNodeId: nodeId,
+                    lastFocusedNodeId: nodeId ?? state.lastFocusedNodeId,
+                }));
             },
 
             toggleHighlight: (nodeId) => {
@@ -105,6 +110,10 @@ export const useTreeStore = create<TreeStore>()(
                             state.focusedNodeId && toDelete.has(state.focusedNodeId)
                                 ? node.parentId
                                 : state.focusedNodeId,
+                        lastFocusedNodeId:
+                            state.lastFocusedNodeId && toDelete.has(state.lastFocusedNodeId)
+                                ? node.parentId
+                                : state.lastFocusedNodeId,
                         highlightedNodeIds: state.highlightedNodeIds.filter(
                             (id) => !toDelete.has(id)
                         ),
@@ -141,6 +150,7 @@ export const useTreeStore = create<TreeStore>()(
                     nodes: {},
                     rootId: null,
                     focusedNodeId: null,
+                    lastFocusedNodeId: null,
                     highlightedNodeIds: [],
                 });
             },
@@ -150,6 +160,7 @@ export const useTreeStore = create<TreeStore>()(
                     nodes: newState.nodes,
                     rootId: newState.rootId,
                     focusedNodeId: newState.focusedNodeId,
+                    lastFocusedNodeId: newState.lastFocusedNodeId ?? newState.focusedNodeId,
                     highlightedNodeIds: newState.highlightedNodeIds,
                 });
             },

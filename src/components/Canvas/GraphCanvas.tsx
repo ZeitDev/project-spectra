@@ -43,6 +43,7 @@ function GraphCanvasInner() {
     const { fitView, setCenter, getZoom } = useReactFlow();
     const prevNodeCount = useRef(0);
     const lastPannedId = useRef<string | null>(null);
+    const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Compute active branch path for focused node
     const activeBranch = useMemo(() => {
@@ -91,13 +92,29 @@ function GraphCanvasInner() {
 
     const onNodeClick: NodeMouseHandler = useCallback(
         (_event, node) => {
-            toggleHighlight(node.id);
+            // Cancel any pending single click timeout
+            if (clickTimeoutRef.current) {
+                clearTimeout(clickTimeoutRef.current);
+                clickTimeoutRef.current = null;
+                return; // Let the double click handler take over
+            }
+
+            // Start a timeout for single click
+            clickTimeoutRef.current = setTimeout(() => {
+                toggleHighlight(node.id);
+                clickTimeoutRef.current = null;
+            }, 250); // 250ms delay to distinguish from double click
         },
         [toggleHighlight]
     );
 
     const onNodeDoubleClick: NodeMouseHandler = useCallback(
         (_event, node) => {
+            // Ensure single click timeout is cleared
+            if (clickTimeoutRef.current) {
+                clearTimeout(clickTimeoutRef.current);
+                clickTimeoutRef.current = null;
+            }
             focusNode(node.id);
         },
         [focusNode]
@@ -114,6 +131,18 @@ function GraphCanvasInner() {
         focusNode(null);
         clearHighlights();
     }, [focusNode, clearHighlights]);
+
+    const onMoveStart = useCallback(
+        (_event: any, _viewport: any) => {
+            // React Flow passes the event as the first argument.
+            // If it's a user-initiated move (mouse/touch), 'event' will be defined.
+            // Programmatic moves (like fitView or setCenter) usually have a null/undefined event.
+            if (_event && focusedNodeId) {
+                focusNode(null);
+            }
+        },
+        [focusedNodeId, focusNode]
+    );
 
     // Fit view when first node is added
     useEffect(() => {
@@ -133,6 +162,7 @@ function GraphCanvasInner() {
             onNodeDoubleClick={onNodeDoubleClick}
             onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
+            onMoveStart={onMoveStart}
             panOnScroll={false}
             zoomOnScroll={true}
             minZoom={0.1}

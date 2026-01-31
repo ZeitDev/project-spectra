@@ -35,5 +35,5 @@ export function useZoomLevel(): ZoomLevel {
 
     useOnViewportChange({ onChange: onViewportChange });
 
-    return zoomLevel;
+    return 3; //Lets stay on full zoom for now //zoomLevel;
 }

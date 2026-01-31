@@ -37,6 +37,7 @@ export interface TreeActions {
     updateNodeContent: (nodeId: string, content: string) => void;
     setNodeStatus: (nodeId: string, status: NodeStatus) => void;
     clearAll: () => void;
+    loadState: (state: TreeState) => void;
 }
 
 /** Combined store type */

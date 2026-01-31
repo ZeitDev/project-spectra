@@ -144,6 +144,15 @@ export const useTreeStore = create<TreeStore>()(
                     highlightedNodeIds: [],
                 });
             },
+
+            loadState: (newState) => {
+                set({
+                    nodes: newState.nodes,
+                    rootId: newState.rootId,
+                    focusedNodeId: newState.focusedNodeId,
+                    highlightedNodeIds: newState.highlightedNodeIds,
+                });
+            },
         }),
         {
             name: 'spectra-tree-storage',

@@ -28,11 +28,19 @@ const nodeTypes = {
 function GraphCanvasInner() {
     // Get stable references to store values
     const store = useTreeStore();
-    const { nodes, rootId, selectedNodeId, selectNode } = store;
+    const {
+        nodes,
+        rootId,
+        focusedNodeId,
+        highlightedNodeIds,
+        focusNode,
+        toggleHighlight,
+        clearHighlights
+    } = store;
 
     // Local state for zoom level
     const [zoomLevel, setZoomLevel] = useState<ZoomLevel>(2);
-    const { fitView } = useReactFlow();
+    const { fitView, setCenter, getZoom } = useReactFlow();
     const prevNodeCount = useRef(0);
     const lastPannedId = useRef<string | null>(null);
 
@@ -48,54 +56,69 @@ function GraphCanvasInner() {
         }, []),
     });
 
-    // Compute active branch path
+    // Compute active branch path for focused node
     const activeBranch = useMemo(() => {
-        if (!selectedNodeId) return new Set<string>();
+        if (!focusedNodeId) return new Set<string>();
         const path: string[] = [];
-        let current = nodes[selectedNodeId];
+        let current = nodes[focusedNodeId];
         while (current) {
             path.push(current.id);
             current = current.parentId ? nodes[current.parentId] : (undefined as any);
         }
         return new Set(path);
-    }, [nodes, selectedNodeId]);
+    }, [nodes, focusedNodeId]);
 
     // Transform tree to React Flow format
     const { nodes: flowNodes, edges: flowEdges } = useMemo(
-        () => treeToReactFlow({ nodes, rootId }, zoomLevel, activeBranch, selectedNodeId),
-        [nodes, rootId, zoomLevel, activeBranch, selectedNodeId]
+        () => treeToReactFlow(
+            { nodes, rootId },
+            zoomLevel,
+            activeBranch,
+            focusedNodeId,
+            highlightedNodeIds
+        ),
+        [nodes, rootId, zoomLevel, activeBranch, focusedNodeId, highlightedNodeIds]
     );
 
-    const { setCenter, getZoom } = useReactFlow();
-
-    // Auto-pan to selected node
+    // Auto-pan to FOCUSED node
     useEffect(() => {
-        if (selectedNodeId && selectedNodeId !== lastPannedId.current) {
-            const node = flowNodes.find((n) => n.id === selectedNodeId);
+        if (focusedNodeId && focusedNodeId !== lastPannedId.current) {
+            const node = flowNodes.find((n) => n.id === focusedNodeId);
             if (node) {
-                lastPannedId.current = selectedNodeId;
+                lastPannedId.current = focusedNodeId;
                 const currentZoom = getZoom();
-                // Force Level 3 if not already deep enough (threshold 1.0)
+                // Force Level 3 if not already deep enough
                 const targetZoom = currentZoom >= 1.0 ? currentZoom : 1.1;
 
-                // Calculate center of the node
                 const { w, h } = ZOOM_DIMENSIONS[zoomLevel];
                 const centerX = node.position.x + w / 2;
                 const centerY = node.position.y + h / 2;
 
                 setCenter(centerX, centerY, { duration: 800, zoom: targetZoom });
             }
-        } else if (!selectedNodeId) {
+        } else if (!focusedNodeId) {
             lastPannedId.current = null;
         }
-    }, [selectedNodeId, flowNodes, setCenter, getZoom, zoomLevel]);
+    }, [focusedNodeId, flowNodes, setCenter, getZoom, zoomLevel]);
 
     const onNodeClick: NodeMouseHandler = useCallback(
         (_event, node) => {
-            selectNode(node.id);
+            toggleHighlight(node.id);
         },
-        [selectNode]
+        [toggleHighlight]
     );
+
+    const onNodeDoubleClick: NodeMouseHandler = useCallback(
+        (_event, node) => {
+            focusNode(node.id);
+        },
+        [focusNode]
+    );
+
+    const onPaneClick = useCallback(() => {
+        focusNode(null);
+        clearHighlights();
+    }, [focusNode, clearHighlights]);
 
     // Fit view when first node is added
     useEffect(() => {
@@ -112,6 +135,8 @@ function GraphCanvasInner() {
             edges={flowEdges}
             nodeTypes={nodeTypes}
             onNodeClick={onNodeClick}
+            onNodeDoubleClick={onNodeDoubleClick}
+            onPaneClick={onPaneClick}
             panOnScroll={false}
             zoomOnScroll={true}
             minZoom={0.1}

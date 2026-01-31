@@ -19,7 +19,8 @@ export interface TreeNode {
 export interface TreeState {
     nodes: Record<string, TreeNode>; // Flat map for O(1) lookup
     rootId: string | null;
-    selectedNodeId: string | null;
+    focusedNodeId: string | null; // For Focus Mode
+    highlightedNodeIds: string[]; // For multi-select glowing
 }
 
 /** Zustand store actions */
@@ -29,7 +30,9 @@ export interface TreeActions {
         role: TreeNode['role'],
         content: string
     ) => string;
-    selectNode: (nodeId: string | null) => void;
+    focusNode: (nodeId: string | null) => void;
+    toggleHighlight: (nodeId: string) => void;
+    clearHighlights: () => void;
     deleteNode: (nodeId: string) => void;
     updateNodeContent: (nodeId: string, content: string) => void;
     setNodeStatus: (nodeId: string, status: NodeStatus) => void;
@@ -47,7 +50,8 @@ export interface GraphNode {
     data: {
         treeNode: TreeNode;
         isOnActiveBranch: boolean;
-        isSelected: boolean;
+        isHighlighted: boolean;
+        isSelected: boolean; // This maps to focus status
         depth: number;
     };
 }

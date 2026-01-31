@@ -10,7 +10,8 @@ export const useTreeStore = create<TreeStore>()(
             // State
             nodes: {},
             rootId: null,
-            selectedNodeId: null,
+            focusedNodeId: null,
+            highlightedNodeIds: [],
 
             // Actions
             addNode: (parentId, role, content) => {
@@ -40,15 +41,31 @@ export const useTreeStore = create<TreeStore>()(
                     return {
                         nodes: newNodes,
                         rootId: parentId === null ? id : state.rootId,
-                        selectedNodeId: id, // Auto-select new node
+                        focusedNodeId: id, // Focus new message
+                        highlightedNodeIds: [id], // Highlight new message
                     };
                 });
 
                 return id;
             },
 
-            selectNode: (nodeId) => {
-                set({ selectedNodeId: nodeId });
+            focusNode: (nodeId) => {
+                set({ focusedNodeId: nodeId });
+            },
+
+            toggleHighlight: (nodeId) => {
+                set((state) => {
+                    const isHighlighted = state.highlightedNodeIds.includes(nodeId);
+                    return {
+                        highlightedNodeIds: isHighlighted
+                            ? state.highlightedNodeIds.filter((id) => id !== nodeId)
+                            : [...state.highlightedNodeIds, nodeId],
+                    };
+                });
+            },
+
+            clearHighlights: () => {
+                set({ highlightedNodeIds: [] });
             },
 
             deleteNode: (nodeId) => {
@@ -84,10 +101,13 @@ export const useTreeStore = create<TreeStore>()(
                     return {
                         nodes: newNodes,
                         rootId: nodeId === state.rootId ? null : state.rootId,
-                        selectedNodeId:
-                            state.selectedNodeId && toDelete.has(state.selectedNodeId)
+                        focusedNodeId:
+                            state.focusedNodeId && toDelete.has(state.focusedNodeId)
                                 ? node.parentId
-                                : state.selectedNodeId,
+                                : state.focusedNodeId,
+                        highlightedNodeIds: state.highlightedNodeIds.filter(
+                            (id) => !toDelete.has(id)
+                        ),
                     };
                 });
             },
@@ -117,7 +137,12 @@ export const useTreeStore = create<TreeStore>()(
             },
 
             clearAll: () => {
-                set({ nodes: {}, rootId: null, selectedNodeId: null });
+                set({
+                    nodes: {},
+                    rootId: null,
+                    focusedNodeId: null,
+                    highlightedNodeIds: [],
+                });
             },
         }),
         {

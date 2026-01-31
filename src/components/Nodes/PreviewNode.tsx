@@ -2,8 +2,8 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { GraphNode } from '../../types';
 import { BaseNode } from './BaseNode';
 
-export function PreviewNode({ data }: NodeProps<GraphNode['data']>) {
-    const { isSelected, isOnActiveBranch, treeNode } = data;
+export function PreviewNode({ data }: NodeProps<GraphNode>) {
+    const { isSelected, isHighlighted, isOnActiveBranch, treeNode } = data;
 
     const roleLabel = treeNode.role === 'user' ? 'You' : 'AI';
     const roleColor = treeNode.role === 'user' ? 'text-violet-600' : 'text-emerald-600';
@@ -16,7 +16,7 @@ export function PreviewNode({ data }: NodeProps<GraphNode['data']>) {
     return (
         <>
             <Handle type="target" position={Position.Top} className="opacity-0" />
-            <BaseNode isSelected={isSelected} isOnActiveBranch={isOnActiveBranch}>
+            <BaseNode isSelected={isSelected} isHighlighted={isHighlighted} isOnActiveBranch={isOnActiveBranch}>
                 <div className="w-[180px] p-3">
                     <div className={`text-xs font-medium mb-1 ${roleColor}`}>
                         {roleLabel}

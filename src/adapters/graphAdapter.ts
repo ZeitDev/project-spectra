@@ -1,5 +1,5 @@
 import dagre from 'dagre';
-import type { TreeNode, GraphNode, GraphEdge, TreeState, ZoomLevel } from '../types';
+import type { TreeNode, GraphNode, TreeState, ZoomLevel } from '../types';
 import { ZOOM_DIMENSIONS } from '../types';
 import type { Node, Edge } from '@xyflow/react';
 
@@ -23,7 +23,8 @@ export function treeToReactFlow(
     state: Pick<TreeState, 'nodes' | 'rootId'>,
     zoomLevel: ZoomLevel,
     activeBranchIds: Set<string>,
-    selectedNodeId: string | null
+    focusedNodeId: string | null,
+    highlightedNodeIds: string[]
 ): { nodes: Node<GraphNode['data']>[]; edges: Edge[] } {
     const { nodes: treeNodes, rootId } = state;
     if (!rootId) return { nodes: [], edges: [] };
@@ -41,30 +42,46 @@ export function treeToReactFlow(
         g.setNode(node.id, { width: LAYOUT_W, height: LAYOUT_H });
     });
 
-    // 4. Add all edges to dagre
+    // 4. Calculate highlighted paths (all ancestors of highlighted IDs)
+    const highlightedPaths = new Set<string>();
+    highlightedNodeIds.forEach(id => {
+        let current = treeNodes[id];
+        while (current) {
+            highlightedPaths.add(current.id);
+            current = current.parentId ? treeNodes[current.parentId] : (undefined as any);
+        }
+    });
+
+    // 5. Add all edges to dagre
     const edges: Edge[] = [];
     Object.values(treeNodes).forEach((node) => {
         node.children.forEach((childId) => {
             g.setEdge(node.id, childId);
-            const isOnBranch =
-                activeBranchIds.has(node.id) && activeBranchIds.has(childId);
+
+            // Branch is only active if focus mode is on
+            const isOnBranch = focusedNodeId ? (activeBranchIds.has(node.id) && activeBranchIds.has(childId)) : true;
+
+            // Edge is highlighted if BOTH nodes are in a highlighted path
+            const isHighlightedEdge = highlightedPaths.has(node.id) && highlightedPaths.has(childId);
+
             edges.push({
                 id: `${node.id}-${childId}`,
                 source: node.id,
                 target: childId,
                 style: {
-                    opacity: isOnBranch ? 1 : 0.2,
-                    stroke: isOnBranch ? '#8b5cf6' : '#94a3b8',
-                    strokeWidth: isOnBranch ? 2 : 1,
+                    opacity: (isOnBranch || isHighlightedEdge) ? 1 : 0.2,
+                    stroke: (isOnBranch || isHighlightedEdge) ? '#8b5cf6' : '#94a3b8',
+                    strokeWidth: (isOnBranch || isHighlightedEdge) ? 2 : 1,
                 },
+                animated: isHighlightedEdge && !isOnBranch,
             });
         });
     });
 
-    // 5. Run dagre layout
+    // 6. Run dagre layout
     dagre.layout(g);
 
-    // 6. Map to React Flow nodes with rendering offsets
+    // 7. Map to React Flow nodes with rendering offsets
     const nodeTypeMap: Record<ZoomLevel, GraphNode['type']> = {
         0: 'dot',
         1: 'label',
@@ -79,6 +96,7 @@ export function treeToReactFlow(
         (treeNode) => {
             const pos = g.node(treeNode.id);
             const isOnActiveBranch = activeBranchIds.has(treeNode.id);
+            const isHighlighted = highlightedPaths.has(treeNode.id);
 
             return {
                 id: treeNode.id,
@@ -91,11 +109,13 @@ export function treeToReactFlow(
                 data: {
                     treeNode,
                     isOnActiveBranch,
-                    isSelected: treeNode.id === selectedNodeId,
+                    isHighlighted,
+                    isSelected: treeNode.id === focusedNodeId,
                     depth: getDepth(treeNodes, treeNode.id),
                 },
                 style: {
-                    opacity: isOnActiveBranch ? 1 : 0.3,
+                    // Only dim if Focus Mode is active AND it's not a highlighted branch
+                    opacity: focusedNodeId ? (isOnActiveBranch || isHighlighted ? 1 : 0.3) : 1,
                 },
             };
         }

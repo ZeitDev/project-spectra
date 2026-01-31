@@ -6,6 +6,7 @@ export function GlassConsole() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [input, setInput] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [showCollapseButton, setShowCollapseButton] = useState(false);
     const effectiveParent = useEffectiveParentNode();
     const effectiveParentId = useEffectiveParentId();
     const focusedNodeId = useTreeStore((state) => state.focusedNodeId);
@@ -53,12 +54,15 @@ export function GlassConsole() {
         [handleSubmit]
     );
 
-    // Auto-resize textarea
+    // Auto-resize textarea and check if collapse button should show
     useEffect(() => {
         const textarea = textareaRef.current;
         if (textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = `${textarea.scrollHeight}px`;
+
+            // Show collapse button when content exceeds threshold (roughly 3+ lines)
+            setShowCollapseButton(textarea.scrollHeight > 100);
         }
     }, [input]);
 
@@ -85,22 +89,24 @@ export function GlassConsole() {
             <form onSubmit={handleSubmit}>
                 <div className={`glass rounded-2xl p-4 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative ${isCollapsed ? 'h-[140px] overflow-hidden flex flex-col' : ''
                     }`}>
-                    {/* Collapse/Expand Button */}
-                    <button
-                        type="button"
-                        onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="absolute top-4 right-4 p-1 rounded-md hover:bg-black/5 text-slate-400 hover:text-indigo-600 transition-colors z-10"
-                        title={isCollapsed ? "Expand Chat" : "Collapse Chat"}
-                    >
-                        <svg
-                            className={`w-4 h-4 transition-transform duration-500 ${isCollapsed ? 'rotate-180' : ''}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                    {/* Collapse/Expand Button - only show when content has expanded */}
+                    {showCollapseButton && (
+                        <button
+                            type="button"
+                            onClick={() => setIsCollapsed(!isCollapsed)}
+                            className="absolute top-4 right-4 p-1 rounded-md hover:bg-black/5 text-slate-400 hover:text-indigo-600 transition-all z-10 animate-in fade-in duration-300"
+                            title={isCollapsed ? "Expand Chat" : "Collapse Chat"}
                         >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                    </button>
+                            <svg
+                                className={`w-4 h-4 transition-transform duration-500 ${isCollapsed ? '' : 'rotate-180'}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                        </button>
+                    )}
 
                     {/* Context indicator */}
                     <div className="text-xs text-slate-600 mb-2 truncate font-medium ml-1 pr-8 flex-shrink-0">

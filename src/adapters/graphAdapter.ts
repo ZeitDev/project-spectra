@@ -64,16 +64,20 @@ export function treeToReactFlow(
             // Edge is highlighted if BOTH nodes are in a highlighted path
             const isHighlightedEdge = highlightedPaths.has(node.id) && highlightedPaths.has(childId);
 
+            // Opacity Logic: Always 1 unless in Level 3 Focus Mode
+            const isDimmed = zoomLevel === 3 && focusedNodeId && !isOnBranch && !isHighlightedEdge;
+
             edges.push({
                 id: `${node.id}-${childId}`,
                 source: node.id,
                 target: childId,
                 style: {
-                    opacity: (isOnBranch || isHighlightedEdge) ? 1 : 0.2,
-                    stroke: (isOnBranch || isHighlightedEdge) ? '#8b5cf6' : '#94a3b8',
-                    strokeWidth: (isOnBranch || isHighlightedEdge) ? 2 : 1,
+                    opacity: isDimmed ? 0.1 : 1,
+                    stroke: isHighlightedEdge ? '#d8b4fe' : (isOnBranch ? '#8b5cf6' : '#94a3b8'), // Lighter violet for highlight
+                    strokeWidth: isHighlightedEdge ? 3 : (isOnBranch ? 2 : 1),
+                    filter: isHighlightedEdge ? 'drop-shadow(0 0 6px #a78bfa)' : undefined,
                 },
-                animated: isHighlightedEdge && !isOnBranch,
+                animated: false,
             });
         });
     });
@@ -98,6 +102,9 @@ export function treeToReactFlow(
             const isOnActiveBranch = activeBranchIds.has(treeNode.id);
             const isHighlighted = highlightedPaths.has(treeNode.id);
 
+            // Opacity Logic: Always 1 unless in Level 3 Focus Mode
+            const isDimmed = zoomLevel === 3 && focusedNodeId && !isOnActiveBranch && !isHighlighted;
+
             return {
                 id: treeNode.id,
                 type: nodeTypeMap[zoomLevel],
@@ -114,8 +121,9 @@ export function treeToReactFlow(
                     depth: getDepth(treeNodes, treeNode.id),
                 },
                 style: {
-                    // Only dim if Focus Mode is active AND it's not a highlighted branch
-                    opacity: focusedNodeId ? (isOnActiveBranch || isHighlighted ? 1 : 0.3) : 1,
+                    opacity: isDimmed ? 0.1 : 1,
+                    // Bring highlighted/active nodes to front in overlap scenarios
+                    zIndex: (isOnActiveBranch || isHighlighted) ? 10 : 1,
                 },
             };
         }

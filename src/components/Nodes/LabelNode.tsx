@@ -10,19 +10,28 @@ export function LabelNode({ data }: NodeProps<GraphNode>) {
     return (
         <>
             <Handle type="target" position={Position.Top} className="opacity-0" />
-            <div
-                className={`
-          flex items-center gap-2 px-2 py-1 rounded-full node-transition
-          glass-node
-          ${isHighlighted ? 'ring-2 ring-violet-400 shadow-[0_0_12px_rgba(167,139,250,0.6)]' : ''}
-          ${isSelected ? 'glass-node-selected scale-105' : ''}
-          ${!isOnActiveBranch && isSelected ? '' : !isOnActiveBranch ? 'opacity-30' : ''}
-        `}
-            >
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${bgColor}`} />
-                <span className="text-xs text-slate-700 truncate max-w-[80px]">
-                    {label}
-                </span>
+            <div className="relative isolate">
+                {/* Outer Glow */}
+                {isHighlighted && (
+                    <div className="absolute -inset-3 bg-violet-600/50 rounded-full blur-lg -z-20" />
+                )}
+
+                {/* Gradient Outline */}
+                <div className="absolute -inset-[2px] rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 -z-10" />
+
+                <div
+                    className={`
+              flex items-center gap-2 px-2 py-1 rounded-full node-transition relative
+              glass-node
+              ${isSelected ? 'glass-node-selected scale-105' : ''}
+              ${!isOnActiveBranch && isSelected ? '' : ''}
+            `}
+                >
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${bgColor}`} />
+                    <span className="text-xs text-slate-700 truncate max-w-[80px]">
+                        {label}
+                    </span>
+                </div>
             </div>
             <Handle type="source" position={Position.Bottom} className="opacity-0" />
         </>

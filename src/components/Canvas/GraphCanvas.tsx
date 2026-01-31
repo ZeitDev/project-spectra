@@ -115,6 +115,13 @@ function GraphCanvasInner() {
         [focusNode]
     );
 
+    const onEdgeClick = useCallback(
+        (_event: React.MouseEvent, edge: any) => {
+            toggleHighlight(edge.target);
+        },
+        [toggleHighlight]
+    );
+
     const onPaneClick = useCallback(() => {
         focusNode(null);
         clearHighlights();
@@ -136,6 +143,7 @@ function GraphCanvasInner() {
             nodeTypes={nodeTypes}
             onNodeClick={onNodeClick}
             onNodeDoubleClick={onNodeDoubleClick}
+            onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
             panOnScroll={false}
             zoomOnScroll={true}

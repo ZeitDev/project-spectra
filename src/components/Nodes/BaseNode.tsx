@@ -14,15 +14,25 @@ export function BaseNode({
     isOnActiveBranch,
 }: BaseNodeProps) {
     return (
-        <div
-            className={`
-        glass-node node-transition rounded-xl
+        <div className="relative isolate">
+            {/* Outer Glow */}
+            {isHighlighted && (
+                <div className="absolute -inset-4 bg-violet-600/40 rounded-xl blur-xl -z-20 transition-all duration-500" />
+            )}
+
+            {/* Gradient Outline */}
+            <div className="absolute -inset-[2px] rounded-xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 -z-10 opacity-100" />
+
+            {/* Main Content */}
+            <div
+                className={`
+        glass-node node-transition rounded-xl h-full relative
         ${isSelected ? 'glass-node-selected' : ''}
-        ${isHighlighted ? 'ring-2 ring-violet-500 shadow-[0_0_25px_rgba(139,92,246,0.5)]' : ''}
-        ${!isOnActiveBranch && isSelected ? '' : !isOnActiveBranch && !isHighlighted ? 'opacity-30' : ''}
+        ${!isOnActiveBranch && isSelected ? '' : ''}
       `}
-        >
-            {children}
+            >
+                {children}
+            </div>
         </div>
     );
 }

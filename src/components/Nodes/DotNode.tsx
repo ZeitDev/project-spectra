@@ -9,15 +9,24 @@ export function DotNode({ data }: NodeProps<GraphNode>) {
     return (
         <>
             <Handle type="target" position={Position.Top} className="opacity-0" />
-            <div
-                className={`
-          w-4 h-4 rounded-full node-transition
-          ${bgColor}
-          ${isHighlighted ? 'ring-2 ring-violet-400 shadow-[0_0_10px_rgba(167,139,250,0.8)]' : ''}
-          ${isSelected ? 'ring-2 ring-violet-500 ring-offset-2 scale-125' : ''}
-          ${!isOnActiveBranch && isSelected ? '' : !isOnActiveBranch ? 'opacity-30' : ''}
-        `}
-            />
+            <div className="relative isolate">
+                {/* Outer Glow */}
+                {isHighlighted && (
+                    <div className="absolute -inset-3 bg-violet-600/50 rounded-full blur-lg -z-20" />
+                )}
+
+                {/* Gradient Outline */}
+                <div className="absolute -inset-[2px] rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 -z-10" />
+
+                <div
+                    className={`
+              w-4 h-4 rounded-full node-transition relative
+              ${bgColor}
+              ${isSelected ? 'ring-2 ring-violet-500 ring-offset-2 scale-125' : ''}
+              ${!isOnActiveBranch && isSelected ? '' : ''}
+            `}
+                />
+            </div>
             <Handle type="source" position={Position.Bottom} className="opacity-0" />
         </>
     );

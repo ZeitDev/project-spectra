@@ -5,6 +5,7 @@ import { useEffectiveParentId, useEffectiveParentNode } from '../../store/select
 export function GlassConsole() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [input, setInput] = useState('');
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const effectiveParent = useEffectiveParentNode();
     const effectiveParentId = useEffectiveParentId();
     const focusedNodeId = useTreeStore((state) => state.focusedNodeId);
@@ -61,6 +62,18 @@ export function GlassConsole() {
         }
     }, [input]);
 
+    // Scroll textarea to bottom when collapsing
+    useEffect(() => {
+        if (isCollapsed && textareaRef.current) {
+            // Wait for collapse animation to complete (500ms + buffer)
+            setTimeout(() => {
+                if (textareaRef.current) {
+                    textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
+                }
+            }, 550);
+        }
+    }, [isCollapsed]);
+
     const contextLabel = effectiveParent
         ? focusedNodeId
             ? `Replying to: "${effectiveParent.content.slice(0, 40)}${effectiveParent.content.length > 40 ? '...' : ''}"`
@@ -70,14 +83,32 @@ export function GlassConsole() {
     return (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50">
             <form onSubmit={handleSubmit}>
-                <div className="glass rounded-2xl p-4 transition-all duration-300">
+                <div className={`glass rounded-2xl p-4 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative ${isCollapsed ? 'h-[140px] overflow-hidden flex flex-col' : ''
+                    }`}>
+                    {/* Collapse/Expand Button */}
+                    <button
+                        type="button"
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        className="absolute top-4 right-4 p-1 rounded-md hover:bg-black/5 text-slate-400 hover:text-indigo-600 transition-colors z-10"
+                        title={isCollapsed ? "Expand Chat" : "Collapse Chat"}
+                    >
+                        <svg
+                            className={`w-4 h-4 transition-transform duration-500 ${isCollapsed ? 'rotate-180' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                    </button>
+
                     {/* Context indicator */}
-                    <div className="text-xs text-slate-600 mb-2 truncate font-medium ml-1">
+                    <div className="text-xs text-slate-600 mb-2 truncate font-medium ml-1 pr-8 flex-shrink-0">
                         {contextLabel}
                     </div>
 
                     {/* Input area */}
-                    <div className="flex items-end gap-3">
+                    <div className="flex items-end gap-3 flex-1">
                         {/* File attachment button */}
                         <button
                             type="button"
@@ -107,7 +138,8 @@ export function GlassConsole() {
                             onKeyDown={handleKeyDown}
                             placeholder="Type a message..."
                             rows={1}
-                            className="flex-1 resize-none bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 text-base leading-relaxed py-2 pr-3 max-h-[calc(100vh-6.5rem)] overflow-y-auto gradient-scrollbar"
+                            className={`flex-1 resize-none bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 text-base leading-relaxed py-2 pr-3 overflow-y-auto gradient-scrollbar transition-all duration-500 ${isCollapsed ? 'max-h-[90px]' : 'max-h-[calc(100vh-6.5rem)]'
+                                }`}
                         />
 
                         {/* Model switcher button */}

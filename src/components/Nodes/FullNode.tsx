@@ -2,7 +2,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { GraphNode } from '../../types';
 import { BaseNode } from './BaseNode';
 
-export function FullNode({ data }: NodeProps<GraphNode['data']>) {
+export function FullNode({ data }: NodeProps<GraphNode>) {
     const { isSelected, isOnActiveBranch, treeNode } = data;
 
     const roleLabel = treeNode.role === 'user' ? 'You' : 'AI';
@@ -13,8 +13,8 @@ export function FullNode({ data }: NodeProps<GraphNode['data']>) {
         <>
             <Handle type="target" position={Position.Top} className="opacity-0" />
             <BaseNode isSelected={isSelected} isOnActiveBranch={isOnActiveBranch}>
-                <div className={`w-[380px] max-h-[480px] p-4 border-l-4 ${borderColor}`}>
-                    <div className="flex items-center justify-between mb-2">
+                <div className={`w-[400px] h-[500px] p-4 border-l-4 flex flex-col ${borderColor}`}>
+                    <div className="flex items-center justify-between mb-2 flex-shrink-0">
                         <span className={`text-xs font-semibold ${roleColor}`}>
                             {roleLabel}
                         </span>
@@ -24,13 +24,13 @@ export function FullNode({ data }: NodeProps<GraphNode['data']>) {
                             </span>
                         )}
                     </div>
-                    <div className="text-sm text-slate-800 whitespace-pre-wrap overflow-y-auto max-h-[420px] leading-relaxed">
+                    <div className="text-sm text-slate-800 whitespace-pre-wrap overflow-y-auto flex-1 leading-relaxed min-h-0">
                         {treeNode.content || (
                             <span className="text-slate-400 italic">Empty message</span>
                         )}
                     </div>
                     {treeNode.tokenCount > 0 && (
-                        <div className="mt-2 text-xs text-slate-400">
+                        <div className="mt-2 text-xs text-slate-400 flex-shrink-0">
                             {treeNode.tokenCount} tokens
                         </div>
                     )}

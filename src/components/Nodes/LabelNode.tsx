@@ -28,7 +28,7 @@ export function LabelNode({ data }: NodeProps<GraphNode>) {
             `}
                 >
                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${bgColor}`} />
-                    <span className="text-xs text-slate-700 truncate max-w-[80px]">
+                    <span className="text-xs text-slate-700 truncate max-w-[160px]">
                         {label}
                     </span>
                 </div>

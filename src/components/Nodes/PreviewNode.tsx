@@ -17,7 +17,7 @@ export function PreviewNode({ data }: NodeProps<GraphNode>) {
         <>
             <Handle type="target" position={Position.Top} className="opacity-0" />
             <BaseNode isSelected={isSelected} isHighlighted={isHighlighted} isOnActiveBranch={isOnActiveBranch}>
-                <div className="w-[180px] p-3">
+                <div className="w-full p-3">
                     <div className={`text-xs font-medium mb-1 ${roleColor}`}>
                         {roleLabel}
                     </div>

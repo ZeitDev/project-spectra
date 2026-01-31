@@ -38,7 +38,7 @@ export function treeToReactFlow(
         if (zoomLevel !== 3) return ZOOM_DIMENSIONS[zoomLevel].h;
 
         const BASE_CHROME_HEIGHT = 140; // Header + padding + footer (increased for safety)
-        const CHARS_PER_LINE = 44; // Approx for 352px width / ~8px char width
+        const CHARS_PER_LINE = 94; // Approx for 752px width / ~8px char width
         const LINE_HEIGHT = 24; // leading-relaxed
 
         // Handle newlines explicitly

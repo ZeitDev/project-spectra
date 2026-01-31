@@ -20,7 +20,7 @@ export function DotNode({ data }: NodeProps<GraphNode>) {
 
                 <div
                     className={`
-              w-4 h-4 rounded-full node-transition relative
+              w-8 h-8 rounded-full node-transition relative
               ${bgColor}
               ${isSelected ? 'ring-2 ring-indigo-400 ring-offset-2 ring-offset-transparent scale-125' : ''}
               ${!isOnActiveBranch && isSelected ? '' : ''}

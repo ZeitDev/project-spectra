@@ -69,10 +69,10 @@ export interface GraphEdge {
 
 /** Zoom-level dimensions for dagre layout */
 export const ZOOM_DIMENSIONS: Record<0 | 1 | 2 | 3, { w: number; h: number }> = {
-    0: { w: 20, h: 20 }, // Dot
-    1: { w: 100, h: 40 }, // Label
-    2: { w: 200, h: 80 }, // Preview
-    3: { w: 400, h: 500 }, // Full (tall for text)
+    0: { w: 40, h: 40 }, // Dot
+    1: { w: 200, h: 40 }, // Label
+    2: { w: 400, h: 80 }, // Preview
+    3: { w: 800, h: 500 }, // Full (tall for text)
 };
 
 /** Semantic zoom level type */

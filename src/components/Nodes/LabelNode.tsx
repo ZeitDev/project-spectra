@@ -10,7 +10,7 @@ export function LabelNode({ data }: NodeProps<GraphNode>) {
     return (
         <>
             <Handle type="target" position={Position.Top} className="opacity-0" />
-            <div className="relative isolate">
+            <div className="relative isolate w-fit">
                 {/* Outer Glow */}
                 {isHighlighted && (
                     <div className="absolute -inset-3 bg-violet-600/50 rounded-full blur-lg -z-20" />

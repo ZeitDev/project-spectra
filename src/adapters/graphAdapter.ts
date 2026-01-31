@@ -124,6 +124,11 @@ export function treeToReactFlow(
                     opacity: isDimmed ? 0.1 : 1,
                     // Bring highlighted/active nodes to front in overlap scenarios
                     zIndex: (isOnActiveBranch || isHighlighted) ? 10 : 1,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: RENDER_W,
+                    height: RENDER_H,
                 },
             };
         }

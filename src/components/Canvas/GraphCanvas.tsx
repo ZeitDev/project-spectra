@@ -34,6 +34,7 @@ function GraphCanvasInner() {
     const [zoomLevel, setZoomLevel] = useState<ZoomLevel>(2);
     const { fitView } = useReactFlow();
     const prevNodeCount = useRef(0);
+    const lastPannedId = useRef<string | null>(null);
 
     // Handle viewport changes for zoom level
     useOnViewportChange({
@@ -69,9 +70,10 @@ function GraphCanvasInner() {
 
     // Auto-pan to selected node
     useEffect(() => {
-        if (selectedNodeId) {
+        if (selectedNodeId && selectedNodeId !== lastPannedId.current) {
             const node = flowNodes.find((n) => n.id === selectedNodeId);
             if (node) {
+                lastPannedId.current = selectedNodeId;
                 const currentZoom = getZoom();
                 // Force Level 3 if not already deep enough (threshold 1.0)
                 const targetZoom = currentZoom >= 1.0 ? currentZoom : 1.1;
@@ -83,6 +85,8 @@ function GraphCanvasInner() {
 
                 setCenter(centerX, centerY, { duration: 800, zoom: targetZoom });
             }
+        } else if (!selectedNodeId) {
+            lastPannedId.current = null;
         }
     }, [selectedNodeId, flowNodes, setCenter, getZoom, zoomLevel]);
 
@@ -112,7 +116,6 @@ function GraphCanvasInner() {
             zoomOnScroll={true}
             minZoom={0.1}
             maxZoom={2}
-            fitView
             proOptions={{ hideAttribution: true }}
             className="aurora-background"
         >

@@ -28,20 +28,20 @@ export function treeToReactFlow(
     const { nodes: treeNodes, rootId } = state;
     if (!rootId) return { nodes: [], edges: [] };
 
-    // Get dimensions for current zoom level
-    const { w: NODE_WIDTH, h: NODE_HEIGHT } = ZOOM_DIMENSIONS[zoomLevel];
+    // 1. Always use MAX dimensions for layout to ensure spatial stability
+    const { w: LAYOUT_W, h: LAYOUT_H } = ZOOM_DIMENSIONS[3];
 
-    // 1. Build dagre graph for layout
+    // 2. Build dagre graph for layout
     const g = new dagre.graphlib.Graph();
     g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 120 });
     g.setDefaultEdgeLabel(() => ({}));
 
-    // 2. Add all nodes with zoom-aware dimensions
+    // 3. Add all nodes with FIXED layout dimensions
     Object.values(treeNodes).forEach((node) => {
-        g.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
+        g.setNode(node.id, { width: LAYOUT_W, height: LAYOUT_H });
     });
 
-    // 3. Add all edges to dagre
+    // 4. Add all edges to dagre
     const edges: Edge[] = [];
     Object.values(treeNodes).forEach((node) => {
         node.children.forEach((childId) => {
@@ -61,16 +61,19 @@ export function treeToReactFlow(
         });
     });
 
-    // 4. Run dagre layout
+    // 5. Run dagre layout
     dagre.layout(g);
 
-    // 5. Map to React Flow nodes
+    // 6. Map to React Flow nodes with rendering offsets
     const nodeTypeMap: Record<ZoomLevel, GraphNode['type']> = {
         0: 'dot',
         1: 'label',
         2: 'preview',
         3: 'full',
     };
+
+    // Get dimensions for actual rendering at current zoom
+    const { w: RENDER_W, h: RENDER_H } = ZOOM_DIMENSIONS[zoomLevel];
 
     const graphNodes: Node<GraphNode['data']>[] = Object.values(treeNodes).map(
         (treeNode) => {
@@ -80,7 +83,11 @@ export function treeToReactFlow(
             return {
                 id: treeNode.id,
                 type: nodeTypeMap[zoomLevel],
-                position: { x: pos.x - NODE_WIDTH / 2, y: pos.y - NODE_HEIGHT / 2 },
+                // Center the rendered node within its layout box
+                position: {
+                    x: pos.x - RENDER_W / 2,
+                    y: pos.y - RENDER_H / 2
+                },
                 data: {
                     treeNode,
                     isOnActiveBranch,

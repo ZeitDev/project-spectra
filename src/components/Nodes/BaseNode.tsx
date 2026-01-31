@@ -14,7 +14,7 @@ export function BaseNode({
     isOnActiveBranch,
 }: BaseNodeProps) {
     return (
-        <div className="relative isolate group">
+        <div className="relative isolate group w-full h-full">
             {/* Outer Glow - Lighter, more etherial Sky Blue */}
             {isHighlighted && (
                 <div className="absolute -inset-4 bg-sky-400/20 rounded-xl blur-xl -z-20 transition-all duration-500" />

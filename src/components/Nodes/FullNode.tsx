@@ -12,7 +12,7 @@ export function FullNode({ data }: NodeProps<GraphNode>) {
         <>
             <Handle type="target" position={Position.Top} className="opacity-0" />
             <BaseNode isSelected={isSelected} isHighlighted={isHighlighted} isOnActiveBranch={isOnActiveBranch}>
-                <div className="w-[400px] h-[500px] p-6 flex flex-col">
+                <div className="w-[400px] h-full p-6 flex flex-col">
                     <div className="flex items-center justify-between mb-4 flex-shrink-0">
                         <span className={`text-xs font-semibold ${roleColor}`}>
                             {roleLabel}

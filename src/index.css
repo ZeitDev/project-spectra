@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Aurora Gradient Background */
+:root {
+    --aurora-1: #ffffff;
+    --aurora-2: #e0f2fe;
+    /* pale blue */
+    --aurora-3: #ede9fe;
+    /* soft violet */
+    --aurora-4: #f3e8ff;
+    /* soft purple */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Aurora Mesh Gradient */
+.aurora-background {
+    background:
+        radial-gradient(ellipse at 0% 0%, var(--aurora-2) 0%, transparent 50%),
+        radial-gradient(ellipse at 100% 0%, var(--aurora-3) 0%, transparent 50%),
+        radial-gradient(ellipse at 100% 100%, var(--aurora-4) 0%, transparent 50%),
+        radial-gradient(ellipse at 0% 100%, var(--aurora-2) 0%, transparent 50%),
+        var(--aurora-1);
+    background-attachment: fixed;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-node {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+.glass-node-selected {
+    border: 2px solid rgba(139, 92, 246, 0.6);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+}
+
+/* Node transition animations */
+.node-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* React Flow overrides */
+.react-flow__node {
+    transition: opacity 0.3s ease;
+}
+
+.react-flow__edge-path {
+    transition: opacity 0.3s ease, stroke-width 0.3s ease;
+}
+
+.react-flow__controls {
+    display: none;
+    /* Hide default controls for clean UI */
+}
+
+.react-flow__attribution {
+    display: none;
+}

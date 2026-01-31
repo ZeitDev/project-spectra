@@ -1,11 +1,10 @@
-import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
+import { useCallback, useMemo, useEffect, useRef } from 'react';
 import {
     ReactFlow,
     Background,
     BackgroundVariant,
     useReactFlow,
     ReactFlowProvider,
-    useOnViewportChange,
     type NodeMouseHandler,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -16,7 +15,8 @@ import { DotNode } from '../Nodes/DotNode';
 import { LabelNode } from '../Nodes/LabelNode';
 import { PreviewNode } from '../Nodes/PreviewNode';
 import { FullNode } from '../Nodes/FullNode';
-import { type ZoomLevel, ZOOM_DIMENSIONS } from '../../types';
+import { ZOOM_DIMENSIONS } from '../../types';
+import { useZoomLevel } from '../../hooks/useZoomLevel';
 
 const nodeTypes = {
     dot: DotNode,
@@ -38,23 +38,11 @@ function GraphCanvasInner() {
         clearHighlights
     } = store;
 
-    // Local state for zoom level
-    const [zoomLevel, setZoomLevel] = useState<ZoomLevel>(2);
+    // Use centralized zoom level hook
+    const zoomLevel = useZoomLevel();
     const { fitView, setCenter, getZoom } = useReactFlow();
     const prevNodeCount = useRef(0);
     const lastPannedId = useRef<string | null>(null);
-
-    // Handle viewport changes for zoom level
-    useOnViewportChange({
-        onChange: useCallback(({ zoom }: { zoom: number }) => {
-            let level: ZoomLevel;
-            if (zoom < 0.3) level = 0;
-            else if (zoom < 0.6) level = 1;
-            else if (zoom < 1.0) level = 2;
-            else level = 3;
-            setZoomLevel((prev) => (prev !== level ? level : prev));
-        }, []),
-    });
 
     // Compute active branch path for focused node
     const activeBranch = useMemo(() => {

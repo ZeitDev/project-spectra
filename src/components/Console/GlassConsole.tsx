@@ -1,16 +1,25 @@
 import { useState, useCallback, useEffect, useRef, type KeyboardEvent, type FormEvent } from 'react';
 import { useTreeStore } from '../../store/useTreeStore';
-import { useEffectiveParentId, useEffectiveParentNode } from '../../store/selectors';
+import { useEffectiveParentId, useEffectiveParentNode, useActiveBranchPath } from '../../store/selectors';
+import { streamResponse, type AppModelType } from '../../services/ai/geminiService';
 
 export function GlassConsole() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [input, setInput] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showCollapseButton, setShowCollapseButton] = useState(false);
+    const [selectedModel, setSelectedModel] = useState<AppModelType>('debug');
     const effectiveParent = useEffectiveParentNode();
     const effectiveParentId = useEffectiveParentId();
+    const branchContext = useActiveBranchPath();
     const focusedNodeId = useTreeStore((state) => state.focusedNodeId);
+    // Use selector direct access for actions to avoid re-renders if possible, 
+    // or just use useTreeStore for everything. 
+    // Mixing patterns is fine for now but let's be consistent.
     const addNode = useTreeStore((state) => state.addNode);
+    const setNodeStatus = useTreeStore((state) => state.setNodeStatus);
+    const updateNodeContent = useTreeStore((state) => state.updateNodeContent);
+    const nodes = useTreeStore((state) => state.nodes); // Need nodes to rebuild context text
 
     const handleFileAttach = useCallback(() => {
         const input = document.createElement('input');
@@ -27,21 +36,94 @@ export function GlassConsole() {
     }, []);
 
     const handleModelSwitch = useCallback(() => {
-        // TODO: Implement model switcher UI
-        console.log('Model switcher clicked');
-    }, []);
+        const models: AppModelType[] = ['debug', 'lite', 'fast', 'pro'];
+        const currentIndex = models.indexOf(selectedModel);
+        const nextIndex = (currentIndex + 1) % models.length;
+        setSelectedModel(models[nextIndex]);
+    }, [selectedModel]);
+
+    // Format model name for display
+    const getModelLabel = (model: AppModelType) => {
+        switch (model) {
+            case 'pro': return 'Pro';
+            case 'fast': return 'Fast';
+            case 'lite': return 'Lite';
+            case 'debug': return 'Debug';
+        }
+    };
 
     const handleSubmit = useCallback(
-        (e?: FormEvent) => {
+        async (e?: FormEvent) => {
             e?.preventDefault();
             const trimmed = input.trim();
             if (!trimmed) return;
 
-            // Add as child of effective parent (focused node or last selected)
-            addNode(effectiveParentId, 'user', trimmed);
+            // 1. Add User Node
+            const userNodeId = addNode(effectiveParentId, 'user', trimmed);
             setInput('');
+            setIsCollapsed(false); // Reset collapse on send
+
+            // 2. Add Assistant Placehoder Node
+            const assistantNodeId = addNode(userNodeId, 'assistant', '');
+            setNodeStatus(assistantNodeId, 'streaming');
+
+            // 3. Prepare Context
+            // We need to fetch the content of all nodes in the branchContext
+            // The branchContext includes the path up TO the focused node.
+            // But we just added two new nodes.
+            // The AI should see: ...Address -> User Message.
+            // We already have `branchContext` which maps IDs. We can resolve them.
+            // The `userNodeId` is the last user message.
+
+            // Re-fetch state or use current `nodes` dependency (might be stale if not careful, but zustand handles this).
+            // Actually, `branchContext` is from a selector reacting to `focusedNodeId`.
+            // When we called `addNode`, `focusedNodeId` updated to `userNodeId` then `assistantNodeId`.
+
+            // Construct context strings from the ANCESTORS of the new assistant node.
+            // Ancestors = [Root ... Parent ... UserNode]
+
+            const getContextContent = () => {
+                // We can manually traverse up from effectiveParentId + the new user message
+                const contextIds = [...branchContext];
+                // Note: branchContext updates on focus change. 
+                // Since addNode updates focus, branchContext MIGHT update next render.
+                // Safer to reconstruct manually using the latest state.
+
+                const historyTexts: string[] = [];
+
+                // Add previous history
+                contextIds.forEach(id => {
+                    const node = nodes[id];
+                    if (node) historyTexts.push(node.content);
+                });
+
+                // Add the new user message
+                historyTexts.push(trimmed);
+
+                return historyTexts;
+            };
+
+            const context = getContextContent();
+
+            // 4. Stream Response
+            await streamResponse(trimmed, context, {
+                model: selectedModel,
+                onChunk: (chunk) => {
+                    useTreeStore.getState().updateNodeContent(assistantNodeId,
+                        useTreeStore.getState().nodes[assistantNodeId].content + chunk
+                    );
+                },
+                onComplete: () => {
+                    setNodeStatus(assistantNodeId, 'idle');
+                },
+                onError: (err) => {
+                    console.error('Streaming error', err);
+                    setNodeStatus(assistantNodeId, 'error');
+                    updateNodeContent(assistantNodeId, 'Error generating response: ' + err.message);
+                }
+            });
         },
-        [input, effectiveParentId, addNode]
+        [input, effectiveParentId, addNode, selectedModel, branchContext, nodes]
     );
 
     const handleKeyDown = useCallback(
@@ -152,22 +234,17 @@ export function GlassConsole() {
                         <button
                             type="button"
                             onClick={handleModelSwitch}
-                            className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100/50 hover:bg-slate-200/50 transition-all flex items-center justify-center text-slate-600 hover:text-slate-800"
-                            title="Switch model"
+                            className={`flex-shrink-0 px-3 h-10 rounded-xl transition-all flex items-center justify-center font-medium text-xs border ${selectedModel === 'pro'
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                : selectedModel === 'fast'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    : selectedModel === 'lite'
+                                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                        : 'bg-slate-100 text-slate-700 border-slate-200'
+                                }`}
+                            title={`Switch model (Current: ${getModelLabel(selectedModel)})`}
                         >
-                            <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-                                />
-                            </svg>
+                            {getModelLabel(selectedModel)}
                         </button>
 
                         {/* Send button with gradient border */}

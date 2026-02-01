@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useTreeStore } from './useTreeStore';
 import type { TreeNode } from '../types';
 
@@ -35,10 +36,12 @@ export const useSelectedNode = () => {
  * Uses shallow equality to prevent re-renders when array contents are the same
  */
 export const useActiveBranchPath = (): string[] => {
-    return useTreeStore((state) => {
-        if (!state.focusedNodeId) return [];
-        return getAncestorPath(state.nodes, state.focusedNodeId);
-    });
+    return useTreeStore(
+        useShallow((state) => {
+            if (!state.focusedNodeId) return [];
+            return getAncestorPath(state.nodes, state.focusedNodeId);
+        })
+    );
 };
 
 /**

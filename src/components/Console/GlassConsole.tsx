@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef, type KeyboardEvent, type FormEvent } from 'react';
 import { useTreeStore } from '../../store/useTreeStore';
+import { useUIStore } from '../../store/useUIStore';
 import { useEffectiveParentId, useEffectiveParentNode, useActiveBranchPath } from '../../store/selectors';
 import { streamResponse, type AppModelType } from '../../services/ai/geminiService';
 
@@ -16,10 +17,14 @@ export function GlassConsole() {
     // Use selector direct access for actions to avoid re-renders if possible, 
     // or just use useTreeStore for everything. 
     // Mixing patterns is fine for now but let's be consistent.
+    // Use selector direct access for actions to avoid re-renders if possible, 
+    // or just use useTreeStore for everything. 
+    // Mixing patterns is fine for now but let's be consistent.
     const addNode = useTreeStore((state) => state.addNode);
     const setNodeStatus = useTreeStore((state) => state.setNodeStatus);
     const updateNodeContent = useTreeStore((state) => state.updateNodeContent);
     const nodes = useTreeStore((state) => state.nodes); // Need nodes to rebuild context text
+    const activeSelection = useUIStore((state) => state.activeSelection);
 
     const handleFileAttach = useCallback(() => {
         const input = document.createElement('input');
@@ -58,8 +63,25 @@ export function GlassConsole() {
             const trimmed = input.trim();
             if (!trimmed) return;
 
+            // Determine parent node and context based on selection or focus
+            let targetParentId = effectiveParentId;
+            let finalContent = trimmed;
+
+            if (activeSelection) {
+                const selectedNode = nodes[activeSelection.nodeId];
+                if (selectedNode && selectedNode.parentId) {
+                    targetParentId = selectedNode.parentId;
+                    finalContent = `> ${activeSelection.text}\n\n${trimmed}`;
+                } else if (selectedNode) {
+                    targetParentId = activeSelection.nodeId;
+                    finalContent = `> ${activeSelection.text}\n\n${trimmed}`;
+                }
+            } else {
+                targetParentId = effectiveParentId;
+            }
+
             // 1. Add User Node
-            const userNodeId = addNode(effectiveParentId, 'user', trimmed);
+            const userNodeId = addNode(targetParentId, 'user', finalContent);
             setInput('');
             setIsCollapsed(false); // Reset collapse on send
 
@@ -68,45 +90,41 @@ export function GlassConsole() {
             setNodeStatus(assistantNodeId, 'streaming');
 
             // 3. Prepare Context
-            // We need to fetch the content of all nodes in the branchContext
-            // The branchContext includes the path up TO the focused node.
-            // But we just added two new nodes.
-            // The AI should see: ...Address -> User Message.
-            // We already have `branchContext` which maps IDs. We can resolve them.
-            // The `userNodeId` is the last user message.
-
-            // Re-fetch state or use current `nodes` dependency (might be stale if not careful, but zustand handles this).
-            // Actually, `branchContext` is from a selector reacting to `focusedNodeId`.
-            // When we called `addNode`, `focusedNodeId` updated to `userNodeId` then `assistantNodeId`.
-
-            // Construct context strings from the ANCESTORS of the new assistant node.
-            // Ancestors = [Root ... Parent ... UserNode]
-
             const getContextContent = () => {
-                // We can manually traverse up from effectiveParentId + the new user message
-                const contextIds = [...branchContext];
-                // Note: branchContext updates on focus change. 
-                // Since addNode updates focus, branchContext MIGHT update next render.
-                // Safer to reconstruct manually using the latest state.
-
                 const historyTexts: string[] = [];
 
-                // Add previous history
-                contextIds.forEach(id => {
-                    const node = nodes[id];
-                    if (node) historyTexts.push(node.content);
-                });
+                if (activeSelection) {
+                    const ancestors: string[] = [];
+                    let current: string | null | undefined = targetParentId;
+
+                    while (current && nodes[current]) {
+                        ancestors.unshift(nodes[current].content);
+                        current = nodes[current].parentId;
+                    }
+                    historyTexts.push(...ancestors);
+                } else {
+                    const contextIds = [...branchContext];
+                    contextIds.forEach(id => {
+                        const node = nodes[id];
+                        if (node) historyTexts.push(node.content);
+                    });
+                }
 
                 // Add the new user message
-                historyTexts.push(trimmed);
+                historyTexts.push(finalContent);
 
                 return historyTexts;
             };
 
             const context = getContextContent();
 
+            // Clear selection after sending
+            if (activeSelection) {
+                useUIStore.getState().clearActiveSelection();
+            }
+
             // 4. Stream Response
-            await streamResponse(trimmed, context, {
+            await streamResponse(finalContent, context, {
                 model: selectedModel,
                 onChunk: (chunk) => {
                     useTreeStore.getState().updateNodeContent(assistantNodeId,
@@ -123,7 +141,7 @@ export function GlassConsole() {
                 }
             });
         },
-        [input, effectiveParentId, addNode, selectedModel, branchContext, nodes]
+        [input, effectiveParentId, addNode, selectedModel, branchContext, nodes, activeSelection, setNodeStatus, updateNodeContent]
     );
 
     const handleKeyDown = useCallback(
@@ -160,11 +178,13 @@ export function GlassConsole() {
         }
     }, [isCollapsed]);
 
-    const contextLabel = effectiveParent
-        ? focusedNodeId
-            ? `Replying to: "${effectiveParent.content.slice(0, 40)}${effectiveParent.content.length > 40 ? '...' : ''}"`
-            : `Continuing on: "${effectiveParent.content.slice(0, 40)}${effectiveParent.content.length > 40 ? '...' : ''}"`
-        : 'Start a new conversation';
+    const contextLabel = activeSelection
+        ? `Continuing on selection: "${activeSelection.text.slice(0, 40)}${activeSelection.text.length > 40 ? '...' : ''}"`
+        : effectiveParent
+            ? focusedNodeId
+                ? `Replying to: "${effectiveParent.content.slice(0, 40)}${effectiveParent.content.length > 40 ? '...' : ''}"`
+                : `Continuing on node: "${effectiveParent.content.slice(0, 40)}${effectiveParent.content.length > 40 ? '...' : ''}"`
+            : 'Start a new conversation';
 
     return (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50">

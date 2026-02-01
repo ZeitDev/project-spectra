@@ -148,6 +148,7 @@ function GraphCanvasInner() {
     const onPaneClick = useCallback(() => {
         focusNode(null);
         clearHighlights();
+        useUIStore.getState().clearActiveSelection();
     }, [focusNode, clearHighlights]);
 
     const onMoveStart = useCallback(

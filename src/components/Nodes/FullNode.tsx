@@ -2,9 +2,42 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { GraphNode } from '../../types';
 import { BaseNode } from './BaseNode';
 import ReactMarkdown from 'react-markdown';
+import { useUIStore } from '../../store/useUIStore';
+import { useCallback, useMemo } from 'react';
+
+
 
 export function FullNode({ data }: NodeProps<GraphNode>) {
     const { isSelected, isHighlighted, isOnActiveBranch, treeNode } = data;
+    const setActiveSelection = useUIStore((state) => state.setActiveSelection);
+
+    // Debug logging
+
+
+    const handleSelection = useCallback(() => {
+        const selection = window.getSelection();
+        const selectionText = selection?.toString() || '';
+
+        if (selectionText.trim().length > 0) {
+            setActiveSelection({
+                nodeId: treeNode.id,
+                text: selectionText.trim()
+            });
+        } else {
+            // If selection was cleared (e.g. single click), clear store selection
+            // This allows falling back to "Continue on node" behavior
+            setActiveSelection(null);
+        }
+    }, [treeNode.id, setActiveSelection]);
+
+    // Custom renderer for markdown - currently standard
+    const markdownComponents = useMemo(() => {
+        return {
+            p: ({ children }: any) => <p className="mb-4 last:mb-0">{children}</p>,
+            // Add other standard overrides if needed
+        };
+    }, []);
+
 
     const roleLabel = treeNode.role === 'user' ? 'You' : 'AI';
     const roleColor = treeNode.role === 'user' ? 'text-indigo-600' : 'text-emerald-600';
@@ -25,9 +58,15 @@ export function FullNode({ data }: NodeProps<GraphNode>) {
                         )}
                     </div>
                     {/* Added nodrag class to allow text selection without panning */}
-                    <div className="nodrag text-sm text-slate-800 overflow-y-auto flex-1 leading-relaxed min-h-0 cursor-text select-text prose prose-sm max-w-none">
+                    <div
+                        className="nodrag text-sm text-slate-800 overflow-y-auto flex-1 leading-relaxed min-h-0 cursor-text select-text prose prose-sm max-w-none"
+                        onMouseUp={handleSelection}
+                        onKeyUp={handleSelection}
+                    >
                         {treeNode.content ? (
-                            <ReactMarkdown>{treeNode.content}</ReactMarkdown>
+                            <ReactMarkdown components={markdownComponents}>
+                                {treeNode.content}
+                            </ReactMarkdown>
                         ) : (
                             <span className="text-slate-400 italic">Empty message</span>
                         )}

@@ -207,3 +207,17 @@ body {
             rgba(56, 189, 248, 0.95) 50%,
             rgba(168, 85, 247, 0.95) 100%);
 }
+
+/* Custom Blockquote Styling for Markdown */
+.prose blockquote {
+    font-style: italic;
+    color: #64748b;
+    /* slate-500 */
+    border-left-color: #cbd5e1;
+    /* slate-300 */
+    border-left-width: 4px;
+    padding-left: 1rem;
+    font-weight: 400;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}

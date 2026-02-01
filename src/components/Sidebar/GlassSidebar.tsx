@@ -278,6 +278,61 @@ export function GlassSidebar() {
                         </div>
                     ))}
                 </div>
+
+                {/* Controls & Info Section */}
+                <div className={`
+                    mt-4 pt-4 border-t border-slate-200/50 flex-shrink-0
+                    transition-all duration-300 delay-150
+                    ${isSidebarCollapsed ? 'opacity-0 invisible h-0 overflow-hidden mt-0 pt-0' : 'opacity-100 visible'}
+                `}>
+                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-1">
+                        Controls & Info
+                    </h4>
+                    <div className="space-y-2.5 px-1 pb-2">
+                        <div className="flex items-start gap-2.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                                <span className="font-semibold text-slate-800">Single LMB</span> node to select it for branching
+                            </p>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                                <span className="font-semibold text-slate-800">Select text</span> to branch on it specifically
+                            </p>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                                <span className="font-semibold text-slate-800">Double LMB</span> node to focus it
+                            </p>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                                <span className="font-semibold text-slate-800">Single LMB</span> to canvas to deselect all
+                            </p>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                                <span className="font-semibold text-slate-800">Single RMB</span> branch/nodes to select multiple
+                            </p>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                                <span className="font-semibold text-slate-800">Hold + Drag RMB</span> to zoom
+                            </p>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                                <span className="font-semibold text-slate-800">Mousewheel</span> to scroll vertically
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

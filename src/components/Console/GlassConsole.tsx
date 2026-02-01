@@ -1,8 +1,9 @@
-import { useState, useCallback, useEffect, useRef, type KeyboardEvent, type FormEvent } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo, type KeyboardEvent, type FormEvent } from 'react';
 import { useTreeStore } from '../../store/useTreeStore';
 import { useUIStore } from '../../store/useUIStore';
 import { useEffectiveParentId, useEffectiveParentNode, useActiveBranchPath } from '../../store/selectors';
 import { streamResponse, generateNodeSummary, type AppModelType } from '../../services/ai/geminiService';
+import { HealthBattery } from './HealthBattery';
 
 export function GlassConsole() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -196,6 +197,36 @@ export function GlassConsole() {
                 : `Continuing on node: "${effectiveParent.content.slice(0, 40)}${effectiveParent.content.length > 40 ? '...' : ''}"`
             : 'Start a new conversation';
 
+    const contextTokenCount = useMemo(() => {
+        let charCount = 0;
+        let targetId: string | null | undefined = null;
+        let extraText = 0;
+
+        if (activeSelection) {
+            // Logic mirrors handleSubmit for context generation
+            const selectedNode = nodes[activeSelection.nodeId];
+            targetId = selectedNode?.parentId || selectedNode?.id; // Use parent if possible to mimic "replying to" context
+            // Note: activeSelection.text is part of the prompt burden.
+            extraText = activeSelection.text.length;
+        } else {
+            // Use effectiveParentId (covers both focused node and last focused node/single selection)
+            targetId = effectiveParentId;
+        }
+
+        if (targetId) {
+            let current: string | null | undefined = targetId;
+            while (current && nodes[current]) {
+                charCount += nodes[current].content.length;
+                current = nodes[current].parentId;
+            }
+        }
+
+        charCount += extraText;
+
+        // Heuristic: ~4 chars per token
+        return Math.ceil(charCount / 4);
+    }, [activeSelection, effectiveParentId, nodes]);
+
     return (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50">
             <form onSubmit={handleSubmit}>
@@ -221,8 +252,11 @@ export function GlassConsole() {
                     )}
 
                     {/* Context indicator */}
-                    <div className="text-xs text-slate-600 mb-2 truncate font-medium ml-1 pr-8 flex-shrink-0">
-                        {contextLabel}
+                    <div className="flex items-center gap-2 mb-2 ml-1">
+                        <HealthBattery tokenCount={contextTokenCount} />
+                        <div className="text-xs text-slate-600 truncate font-medium flex-1">
+                            {contextLabel}
+                        </div>
                     </div>
 
                     {/* Input area */}

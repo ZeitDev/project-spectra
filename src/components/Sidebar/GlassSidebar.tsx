@@ -331,6 +331,12 @@ export function GlassSidebar() {
                                 <span className="font-semibold text-slate-800">Mousewheel</span> to scroll vertically
                             </p>
                         </div>
+                        <div className="flex items-start gap-2.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                                <span className="font-semibold text-slate-800">Hover node or select a branch</span> to view a summary
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

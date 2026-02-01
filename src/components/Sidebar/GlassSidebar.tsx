@@ -1,17 +1,19 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSessionStore } from '../../store/useSessionStore';
 import { useTreeStore } from '../../store/useTreeStore';
+import { useUIStore } from '../../store/useUIStore';
 import { Session } from '../../types/session';
 
 export function GlassSidebar() {
     const { sessions, currentSessionId, createSession, switchSession, deleteSession, updateSessionName, togglePinSession } = useSessionStore();
     const treeStore = useTreeStore();
+    const { isSidebarCollapsed, setSidebarCollapsed, toggleSidebar } = useUIStore();
 
     // UI state for menus and renaming
     const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    // const [isCollapsed, setIsCollapsed] = useState(false); // Removed local state
     const menuRef = useRef<HTMLDivElement>(null);
     const editInputRef = useRef<HTMLInputElement>(null);
 
@@ -81,7 +83,7 @@ export function GlassSidebar() {
     };
 
     const handleCreateSession = () => {
-        setIsCollapsed(false);
+        setSidebarCollapsed(false);
         if (currentSessionId) {
             const currentState = useTreeStore.getState();
             localStorage.setItem(`spectra-tree-${currentSessionId}`, JSON.stringify({
@@ -126,7 +128,7 @@ export function GlassSidebar() {
             className={`
                 fixed top-6 left-6 w-64 z-50 pointer-events-none flex flex-col gap-4
                 transition-[height] duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]
-                ${isCollapsed ? 'h-[72px]' : 'h-[calc(100vh-3rem)]'}
+                ${isSidebarCollapsed ? 'h-[72px]' : 'h-[calc(100vh-3rem)]'}
             `}
         >
             {/* Main Container */}
@@ -136,12 +138,12 @@ export function GlassSidebar() {
                     <div className="flex items-center gap-2">
                         <h1 className="text-slate-800 font-bold tracking-wider text-lg font-display">SPECTRA</h1>
                         <button
-                            onClick={() => setIsCollapsed(!isCollapsed)}
+                            onClick={toggleSidebar}
                             className="p-1 rounded-md hover:bg-black/5 text-slate-400 hover:text-indigo-600 transition-colors"
-                            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                         >
                             <svg
-                                className={`w-4 h-4 transition-transform duration-500 ${isCollapsed ? 'rotate-180' : ''}`}
+                                className={`w-4 h-4 transition-transform duration-500 ${isSidebarCollapsed ? 'rotate-180' : ''}`}
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -165,7 +167,7 @@ export function GlassSidebar() {
                 <div className={`
                     flex-1 overflow-y-auto -mx-2 px-2 pb-2 space-y-1 gradient-scrollbar
                     transition-opacity duration-300 delay-100
-                    ${isCollapsed ? 'opacity-0 invisible' : 'opacity-100 visible'}
+                    ${isSidebarCollapsed ? 'opacity-0 invisible' : 'opacity-100 visible'}
                 `}>
                     {sortedSessions.map(session => (
                         <div

@@ -10,6 +10,7 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import { useTreeStore } from '../../store/useTreeStore';
+import { useUIStore } from '../../store/useUIStore';
 import { treeToReactFlow } from '../../adapters/graphAdapter';
 import { DotNode } from '../Nodes/DotNode';
 import { LabelNode } from '../Nodes/LabelNode';
@@ -72,6 +73,7 @@ function GraphCanvasInner() {
     );
 
     // Auto-pan to FOCUSED node
+    const { isSidebarCollapsed } = useUIStore();
     useEffect(() => {
         if (focusedNodeId && focusedNodeId !== lastPannedId.current) {
             const node = flowNodes.find((n) => n.id === focusedNodeId);
@@ -82,15 +84,21 @@ function GraphCanvasInner() {
                 const targetZoom = currentZoom >= 1.0 ? currentZoom : 1.1;
 
                 const { w, h } = ZOOM_DIMENSIONS[zoomLevel];
-                const centerX = node.position.x + w / 2;
+                let centerX = node.position.x + w / 2;
                 const centerY = node.position.y + h / 2;
+
+                // Adjust for sidebar if it is OPEN
+                if (!isSidebarCollapsed) {
+                    const sidebarOffset = 140; // Approx half of sidebar width + margin
+                    centerX = centerX - (sidebarOffset / targetZoom);
+                }
 
                 setCenter(centerX, centerY, { duration: 800, zoom: targetZoom });
             }
         } else if (!focusedNodeId) {
             lastPannedId.current = null;
         }
-    }, [focusedNodeId, flowNodes, setCenter, getZoom, zoomLevel]);
+    }, [focusedNodeId, flowNodes, setCenter, getZoom, zoomLevel, isSidebarCollapsed]);
 
     const onNodeClick: NodeMouseHandler = useCallback(
         (_event, node) => {

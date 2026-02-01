@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo, type KeyboardEvent, 
 import { useTreeStore } from '../../store/useTreeStore';
 import { useUIStore } from '../../store/useUIStore';
 import { useEffectiveParentId, useEffectiveParentNode, useActiveBranchPath } from '../../store/selectors';
-import { streamResponse, generateNodeSummary, type AppModelType } from '../../services/ai/geminiService';
+import { streamResponse, generateNodeSummary, summarizeBranchContext, type AppModelType } from '../../services/ai/geminiService';
 import { HealthBattery } from './HealthBattery';
 
 export function GlassConsole() {
@@ -11,35 +11,21 @@ export function GlassConsole() {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showCollapseButton, setShowCollapseButton] = useState(false);
     const [selectedModel, setSelectedModel] = useState<AppModelType>('debug');
+    const [isMenuOpen, setIsMenuOpen] = useState(false); // Menu state
+
     const effectiveParent = useEffectiveParentNode();
     const effectiveParentId = useEffectiveParentId();
     const branchContext = useActiveBranchPath();
     const focusedNodeId = useTreeStore((state) => state.focusedNodeId);
-    // Use selector direct access for actions to avoid re-renders if possible, 
-    // or just use useTreeStore for everything. 
-    // Mixing patterns is fine for now but let's be consistent.
-    // Use selector direct access for actions to avoid re-renders if possible, 
-    // or just use useTreeStore for everything. 
-    // Mixing patterns is fine for now but let's be consistent.
+
+    // Selectors
+    const nodes = useTreeStore((state) => state.nodes);
+    const highlightedNodeIds = useTreeStore((state) => state.highlightedNodeIds);
     const addNode = useTreeStore((state) => state.addNode);
     const setNodeStatus = useTreeStore((state) => state.setNodeStatus);
     const updateNodeContent = useTreeStore((state) => state.updateNodeContent);
-    const nodes = useTreeStore((state) => state.nodes); // Need nodes to rebuild context text
     const activeSelection = useUIStore((state) => state.activeSelection);
-
-    const handleFileAttach = useCallback(() => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.multiple = true;
-        input.onchange = (e) => {
-            const files = (e.target as HTMLInputElement).files;
-            if (files) {
-                console.log('Files selected:', Array.from(files).map(f => f.name));
-                // TODO: Handle file upload
-            }
-        };
-        input.click();
-    }, []);
+    const clearHighlights = useTreeStore((state) => state.clearHighlights);
 
     const handleModelSwitch = useCallback(() => {
         const models: AppModelType[] = ['debug', 'lite', 'fast', 'pro'];
@@ -57,6 +43,68 @@ export function GlassConsole() {
             case 'debug': return 'Debug';
         }
     };
+
+    // Validation for Pruning
+    const { canPrune, sortedPrunableNodes } = useMemo(() => {
+        if (highlightedNodeIds.length < 2) return { canPrune: false, sortedPrunableNodes: [] };
+
+        const selectedNodes = highlightedNodeIds.map(id => nodes[id]).filter(Boolean);
+        if (selectedNodes.length !== highlightedNodeIds.length) return { canPrune: false, sortedPrunableNodes: [] };
+
+        // Sort by creation time as a proxy for depth usually, but let's be strict about lineage
+        // or just creation time? Lineage is safer.
+        // Let's sort based on finding the root of the chain.
+        // 1. Must be a single chain.
+
+        // Find node with no parent in the set
+        const idsSet = new Set(highlightedNodeIds);
+        const roots = selectedNodes.filter(n => !n.parentId || !idsSet.has(n.parentId));
+
+        if (roots.length !== 1) return { canPrune: false, sortedPrunableNodes: [] }; // Disjoint or cycle (unlikely in tree)
+
+        let current = roots[0];
+        const sorted = [current];
+
+        // Walk down the chain
+        while (sorted.length < selectedNodes.length) {
+            // Find child in the set
+            const child = selectedNodes.find(n => n.parentId === current.id);
+            if (!child) return { canPrune: false, sortedPrunableNodes: [] }; // Gap in chain
+            sorted.push(child);
+            current = child;
+        }
+
+        return { canPrune: true, sortedPrunableNodes: sorted };
+    }, [highlightedNodeIds, nodes]);
+
+    const handlePruneNodes = useCallback(async () => {
+        if (!canPrune) return;
+
+        setIsMenuOpen(false);
+        const contents = sortedPrunableNodes.map(n => n.content);
+
+        // Use the selected model BUT if it's debug, summarizeBranchContext handles it.
+        // If user is in pro mode, we use pro model for summary? Yes.
+        const summary = await summarizeBranchContext(contents, selectedModel);
+
+        // Create new node
+        // Parent is the lowest node (C) as requested
+        const lastNode = sortedPrunableNodes[sortedPrunableNodes.length - 1];
+        const targetParentId = lastNode.id;
+
+        // Add node
+        addNode(
+            targetParentId,
+            'assistant',
+            summary,
+            sortedPrunableNodes.map(n => n.id) // Pruned IDs
+        );
+
+        // Clear highlights after action
+        clearHighlights();
+
+    }, [canPrune, sortedPrunableNodes, selectedModel, addNode, clearHighlights]);
+
 
     const handleSubmit = useCallback(
         async (e?: FormEvent) => {
@@ -260,28 +308,58 @@ export function GlassConsole() {
                     </div>
 
                     {/* Input area */}
-                    <div className="flex items-end gap-3 flex-1">
-                        {/* File attachment button */}
-                        <button
-                            type="button"
-                            onClick={handleFileAttach}
-                            className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100/50 hover:bg-slate-200/50 transition-all flex items-center justify-center text-slate-600 hover:text-slate-800"
-                            title="Attach files"
-                        >
-                            <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                    <div className="flex items-end gap-3 flex-1 relative">
+                        {/* Menu UI: Replace File Button */}
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100/50 hover:bg-slate-200/50 transition-all flex items-center justify-center text-slate-600 hover:text-slate-800"
+                                title="Node Actions"
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+
+                            {/* Popup Menu */}
+                            {isMenuOpen && (
+                                <div className="absolute bottom-12 left-0 w-48 bg-white/90 backdrop-blur-md border border-white/20 shadow-xl rounded-xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                    <button
+                                        type="button"
+                                        onClick={handlePruneNodes}
+                                        disabled={!canPrune}
+                                        className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors flex items-center gap-2 ${canPrune
+                                            ? 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer'
+                                            : 'text-slate-400 cursor-not-allowed bg-slate-50'
+                                            }`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm8.486-8.486a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243z" />
+                                        </svg>
+                                        Prune Nodes
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={true}
+                                        className="w-full text-left px-4 py-3 text-sm font-medium text-slate-400 bg-slate-50 cursor-not-allowed flex items-center gap-2 border-t border-slate-100"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                        Compare Nodes
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Dismiss menu on click outside (simple backdrop) */}
+                            {isMenuOpen && (
+                                <div
+                                    className="fixed inset-0 z-40 bg-transparent"
+                                    onClick={() => setIsMenuOpen(false)}
                                 />
-                            </svg>
-                        </button>
+                            )}
+                        </div>
 
                         <textarea
                             ref={textareaRef}

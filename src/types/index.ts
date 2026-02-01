@@ -14,6 +14,7 @@ export interface TreeNode {
     tokenCount: number; // Token usage tracking
     createdAt: number;
     children: string[]; // Child node IDs (ordered)
+    prunedNodeIds?: string[]; // IDs of nodes this node summarizes/prunes
 }
 
 /** Zustand store state */
@@ -30,7 +31,8 @@ export interface TreeActions {
     addNode: (
         parentId: string | null,
         role: TreeNode['role'],
-        content: string
+        content: string,
+        prunedNodeIds?: string[]
     ) => string;
     focusNode: (nodeId: string | null) => void;
     setLastFocusedNode: (nodeId: string | null) => void;

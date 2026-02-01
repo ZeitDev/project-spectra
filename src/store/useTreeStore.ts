@@ -15,7 +15,7 @@ export const useTreeStore = create<TreeStore>()(
             highlightedNodeIds: [],
 
             // Actions
-            addNode: (parentId, role, content) => {
+            addNode: (parentId, role, content, prunedNodeIds) => {
                 const id = generateId();
                 const newNode: TreeNode = {
                     id,
@@ -26,6 +26,7 @@ export const useTreeStore = create<TreeStore>()(
                     tokenCount: 0,
                     createdAt: Date.now(),
                     children: [],
+                    prunedNodeIds,
                 };
 
                 set((state) => {

@@ -255,7 +255,8 @@ function GraphCanvasInner() {
     const onMouseDown = useCallback((e: React.MouseEvent) => {
         // Check for Right Click (button 2)
         if (e.button === 2) {
-            e.preventDefault(); // Prevent context menu from opening
+            // Do NOT prevent default here, as it blocks the 'contextmenu' event needed for onNodeContextMenu
+            // e.preventDefault(); 
             isZooming.current = true;
             zoomStartMouseY.current = e.clientY;
             zoomStartLevel.current = getZoom();

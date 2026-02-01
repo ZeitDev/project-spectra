@@ -174,3 +174,31 @@ export async function generateNodeSummary(content: string, modelType: AppModelTy
         return content.slice(0, 50) + '...'; // Fallback to truncation
     }
 }
+
+/**
+ * Summarize a sequence of nodes into a cohesive single message
+ */
+export async function summarizeBranchContext(contents: string[], model: AppModelType): Promise<string> {
+    // 1. Debug Mode Bypass
+    if (model === 'debug') {
+        // Simulate local "processing" delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return "Summary Placeholder";
+    }
+
+    if (!genAI || contents.length === 0) return "Summary Placeholder";
+
+    try {
+        const modelName = 'gemini-2.0-flash-lite';
+        const aiModel = genAI.getGenerativeModel({ model: modelName });
+
+        const prompt = `Summarize the following conversation sequence into a single cohesive message that captures the key points, decisions, and context. Preserve the original meaning and intent.\n\nSequence:\n${contents.join('\n---\n')}`;
+
+        const result = await aiModel.generateContent(prompt);
+        const response = result.response;
+        return response.text().trim();
+    } catch (e) {
+        console.warn('Failed to generate branch summary', e);
+        return "Failed to generate summary";
+    }
+}

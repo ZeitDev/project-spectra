@@ -122,15 +122,8 @@ export function treeToReactFlow(
     calculateYPositions(rootId, 0);
 
 
-    // 3. Calculate highlighted paths (all ancestors of highlighted IDs)
-    const highlightedPaths = new Set<string>();
-    highlightedNodeIds.forEach(id => {
-        let current = treeNodes[id];
-        while (current) {
-            highlightedPaths.add(current.id);
-            current = current.parentId ? treeNodes[current.parentId] : (undefined as any);
-        }
-    });
+    // 3. Highlight nodes (Exact selection only, no ancestors)
+    const highlightedPaths = new Set<string>(highlightedNodeIds);
 
     // 4. Build Edges
     const edges: Edge[] = [];
@@ -165,6 +158,28 @@ export function treeToReactFlow(
                 animated: false,
             });
         });
+
+        // NEW: Pruned edges (Visualization of summary connections)
+        if (node.prunedNodeIds && node.prunedNodeIds.length > 0) {
+            node.prunedNodeIds.forEach(sourceId => {
+                if (!treeNodes[sourceId]) return;
+
+                edges.push({
+                    id: `prune-${sourceId}-${node.id}`,
+                    source: sourceId,
+                    target: node.id,
+                    animated: true,
+                    style: {
+                        stroke: '#a855f7', // Purple-500 indicating "magic" or summary
+                        strokeDasharray: '5,5',
+                        strokeWidth: 2,
+                        opacity: 0.6,
+                    },
+                    // Ensure these are behind everything else
+                    zIndex: 0,
+                });
+            });
+        }
     });
 
     // 5. Map to React Flow nodes with rendering offsets

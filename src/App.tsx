@@ -7,7 +7,7 @@ import { initGemini } from './services/ai/geminiService';
 function App() {
     useEffect(() => {
         initGemini({
-            apiKey: import.meta.env.VITE_GEMINI_API_KEY,
+            apiKey: '', // No longer used on client
         });
     }, []);
 

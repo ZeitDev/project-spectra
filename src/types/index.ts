@@ -9,6 +9,7 @@ export interface TreeNode {
     role: 'user' | 'assistant' | 'system';
     content: string;
     label?: string; // Auto-generated summary (Phase 3)
+    summary?: string; // Cached "lite" summary for zoomed-out view
     status: NodeStatus; // AI streaming state
     tokenCount: number; // Token usage tracking
     createdAt: number;
@@ -38,6 +39,7 @@ export interface TreeActions {
     clearHighlights: () => void;
     deleteNode: (nodeId: string) => void;
     updateNodeContent: (nodeId: string, content: string) => void;
+    setNodeSummary: (nodeId: string, summary: string) => void;
     setNodeStatus: (nodeId: string, status: NodeStatus) => void;
     clearAll: () => void;
     loadState: (state: TreeState) => void;

@@ -48,17 +48,26 @@ function GraphCanvasInner() {
     const lastPannedId = useRef<string | null>(null);
 
 
-    // Compute active branch path for focused node
+    // Compute active branch path for focused node OR highlighted last focused node
     const activeBranch = useMemo(() => {
-        if (!focusedNodeId) return new Set<string>();
+        // If we have focus (Level 3), use it.
+        // If we don't have focus (Level 2), check if the last active node is part of the current highlight selection.
+        const targetId = focusedNodeId || (
+            store.lastFocusedNodeId && highlightedNodeIds.includes(store.lastFocusedNodeId)
+                ? store.lastFocusedNodeId
+                : null
+        );
+
+        if (!targetId) return new Set<string>();
+
         const path: string[] = [];
-        let current = nodes[focusedNodeId];
+        let current = nodes[targetId];
         while (current) {
             path.push(current.id);
             current = current.parentId ? nodes[current.parentId] : (undefined as any);
         }
         return new Set(path);
-    }, [nodes, focusedNodeId]);
+    }, [nodes, focusedNodeId, highlightedNodeIds, store.lastFocusedNodeId]);
 
     // Transform tree to React Flow format
     const { nodes: flowNodes, edges: flowEdges } = useMemo(

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef, type KeyboardEvent, type Form
 import { useTreeStore } from '../../store/useTreeStore';
 import { useUIStore } from '../../store/useUIStore';
 import { useEffectiveParentId, useEffectiveParentNode, useActiveBranchPath } from '../../store/selectors';
-import { streamResponse, type AppModelType } from '../../services/ai/geminiService';
+import { streamResponse, generateNodeSummary, type AppModelType } from '../../services/ai/geminiService';
 
 export function GlassConsole() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -82,6 +82,12 @@ export function GlassConsole() {
 
             // 1. Add User Node
             const userNodeId = addNode(targetParentId, 'user', finalContent);
+
+            // Trigger summary generation for User Node
+            generateNodeSummary(finalContent, selectedModel).then(summary => {
+                useTreeStore.getState().setNodeSummary(userNodeId, summary);
+            });
+
             setInput('');
             setIsCollapsed(false); // Reset collapse on send
 
@@ -131,8 +137,12 @@ export function GlassConsole() {
                         useTreeStore.getState().nodes[assistantNodeId].content + chunk
                     );
                 },
-                onComplete: () => {
+                onComplete: (fullText) => {
                     setNodeStatus(assistantNodeId, 'idle');
+                    // Trigger summary generation for Assistant Node
+                    generateNodeSummary(fullText, selectedModel).then(summary => {
+                        useTreeStore.getState().setNodeSummary(assistantNodeId, summary);
+                    });
                 },
                 onError: (err) => {
                     console.error('Streaming error', err);

@@ -1,9 +1,11 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position, NodeToolbar, type NodeProps } from '@xyflow/react';
 import type { GraphNode } from '../../types';
 import { BaseNode } from './BaseNode';
 import ReactMarkdown from 'react-markdown';
 import { useUIStore } from '../../store/useUIStore';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useViewport } from '@xyflow/react';
+import { NodeSummaryTooltip } from './NodeSummaryTooltip';
 
 
 
@@ -42,9 +44,26 @@ export function FullNode({ data }: NodeProps<GraphNode>) {
     const roleLabel = treeNode.role === 'user' ? 'You' : 'AI';
     const roleColor = treeNode.role === 'user' ? 'text-indigo-600' : 'text-emerald-600';
 
+    const [isHovered, setIsHovered] = useState(false);
+    const { zoom } = useViewport();
+    const showSummary = zoom < 0.6 && (isHovered || isOnActiveBranch);
+
     return (
-        <>
+        <div
+            className="w-full h-full relative group"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
             <Handle type="target" position={Position.Top} className="opacity-0" />
+
+            <NodeToolbar isVisible={showSummary} position={Position.Right} offset={20}>
+                {showSummary && (
+                    <NodeSummaryTooltip
+                        content={treeNode.content}
+                    />
+                )}
+            </NodeToolbar>
+
             <BaseNode isSelected={isSelected} isHighlighted={isHighlighted} isOnActiveBranch={isOnActiveBranch}>
                 <div className="w-full h-full p-6 flex flex-col">
                     <div className="flex items-center justify-between mb-4 flex-shrink-0">
@@ -79,6 +98,6 @@ export function FullNode({ data }: NodeProps<GraphNode>) {
                 </div>
             </BaseNode>
             <Handle type="source" position={Position.Bottom} className="opacity-0" />
-        </>
+        </div>
     );
 }

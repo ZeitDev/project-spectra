@@ -152,6 +152,18 @@ export const useTreeStore = create<TreeStore>()(
                 });
             },
 
+            setNodeSummary: (nodeId, summary) => {
+                set((state) => {
+                    if (!state.nodes[nodeId]) return state;
+                    return {
+                        nodes: {
+                            ...state.nodes,
+                            [nodeId]: { ...state.nodes[nodeId], summary },
+                        },
+                    };
+                });
+            },
+
             setNodeStatus: (nodeId, status: NodeStatus) => {
                 set((state) => {
                     if (!state.nodes[nodeId]) return state;

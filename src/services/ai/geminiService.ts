@@ -132,3 +132,45 @@ export async function generateLabel(messages: string[]): Promise<string> {
         return 'Conversation';
     }
 }
+
+/**
+ * Generate a concise short summary for a node (for zoomed-out views)
+ */
+export async function generateNodeSummary(content: string, modelType: AppModelType): Promise<string> {
+    // 1. Debug Mode Bypass
+    if (modelType === 'debug') {
+        const snippet = content.slice(0, 20).replace(/\n/g, ' ');
+        // Simulate local "processing" delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return `Debug Summary: ${snippet}...`;
+    }
+
+    if (!genAI || !content.trim()) return '';
+
+    try {
+        // 2. Use Flash Lite for speed/cost if available, else Flash
+        // Note: 'gemini-2.0-flash-lite' is the requested model for this feature
+        // If it doesn't exist in the SDK yet, we might need a fallback.
+        // Assuming it's valid as per user request.
+        const modelName = 'gemini-2.0-flash-lite';
+        // Let's stick to a safe known model for now or the one used in streamResponse?
+        // In streamResponse I used 'gemini-2.0-flash-lite'.
+        const model = genAI.getGenerativeModel({ model: modelName });
+
+        const prompt = `Summarize the following text into a very short, single sentence (max 12 words). Content:\n\n${content}`;
+
+        const result = await model.generateContent(prompt);
+        const response = result.response;
+        let summary = response.text().trim();
+
+        // Cleanup quotes if the model adds them
+        if (summary.startsWith('"') && summary.endsWith('"')) {
+            summary = summary.slice(1, -1);
+        }
+
+        return summary;
+    } catch (e) {
+        console.warn('Failed to generate summary', e);
+        return content.slice(0, 50) + '...'; // Fallback to truncation
+    }
+}

@@ -59,17 +59,61 @@ export default async function handler(request: Request) {
 
         if (action === 'stream') {
             // context is an array of strings. We map to history object.
-            // Original logic: history = context.map((msg, i) => ({ role: i%2===0?'user':'model', parts: [{text: msg}] }))
-            const chatHistory = (history || []).map((msg: string, i: number) => ({
-                role: i % 2 === 0 ? 'user' : 'model',
-                parts: [{ text: msg }],
-            }));
-
-            const chat = model.startChat({
-                history: chatHistory,
+            // context is an array of { role, content } objects.
+            // We map to Gemini history object structure.
+            // Normalize history to objects first
+            const rawHistory: { role: 'user' | 'model'; content: string }[] = (history || []).map((msg: any, i: number) => {
+                if (typeof msg === 'string') {
+                    return { role: i % 2 === 0 ? 'user' : 'model', content: msg };
+                }
+                return { role: msg.role, content: msg.content };
             });
 
-            const result = await chat.sendMessageStream(prompt);
+            const sanitizedHistory: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
+
+            // 1. Merge consecutive messages with the same role
+            if (rawHistory.length > 0) {
+                let currentMsg = {
+                    role: rawHistory[0].role,
+                    content: rawHistory[0].content
+                };
+
+                for (let i = 1; i < rawHistory.length; i++) {
+                    const msg = rawHistory[i];
+                    if (msg.role === currentMsg.role) {
+                        currentMsg.content += '\n' + msg.content;
+                    } else {
+                        sanitizedHistory.push({
+                            role: currentMsg.role === 'user' ? 'user' : 'model',
+                            parts: [{ text: currentMsg.content }]
+                        });
+                        currentMsg = { role: msg.role, content: msg.content };
+                    }
+                }
+                // Push the last accumulation
+                sanitizedHistory.push({
+                    role: currentMsg.role === 'user' ? 'user' : 'model',
+                    parts: [{ text: currentMsg.content }]
+                });
+            }
+
+            // 2. Ensure history ends with 'model' (or is empty) for startChat
+            // If the last message is 'user', we pull it out and prepend to the current prompt
+            let activePrompt = prompt;
+
+            if (sanitizedHistory.length > 0 && sanitizedHistory[sanitizedHistory.length - 1].role === 'user') {
+                const lastUserMsg = sanitizedHistory.pop();
+                if (lastUserMsg) {
+                    const lastContent = lastUserMsg.parts[0].text;
+                    activePrompt = `${lastContent}\n\n${prompt}`;
+                }
+            }
+
+            const chat = model.startChat({
+                history: sanitizedHistory,
+            });
+
+            const result = await chat.sendMessageStream(activePrompt);
 
             // Create a readable stream for the response
             const stream = new ReadableStream({

@@ -21,7 +21,7 @@ export interface StreamOptions {
  * Initialize the Gemini service
  * (Kept for compatibility, but no longer needs API key on client)
  */
-export function initGemini(config: GeminiConfig): void {
+export function initGemini(_config: GeminiConfig): void {
     // No-op for client side API key handling
     console.log('[Spectra] Gemini service initialized (server-side)');
 }
@@ -31,7 +31,7 @@ export function initGemini(config: GeminiConfig): void {
  */
 export async function streamResponse(
     prompt: string,
-    context: string[], // History provided as array of strings
+    context: { role: 'user' | 'model'; content: string }[], // Structured history
     options: StreamOptions
 ): Promise<void> {
     try {
@@ -44,7 +44,7 @@ export async function streamResponse(
                 action: 'stream',
                 modelType: options.model,
                 prompt,
-                history: context,
+                history: context, // Pass structured history directly
             }),
         });
 

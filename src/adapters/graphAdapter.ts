@@ -33,30 +33,62 @@ export function treeToReactFlow(
     const X_GAP = 60;
     const Y_GAP = 80;
 
-    // Helper to calculate dynamic height for Level 3
+    // Helper to calculate dynamic height for Level 3 using Shadow DOM measurement
     function calculateNodeHeight(content: string, zoomLevel: ZoomLevel): number {
         if (zoomLevel !== 3) return ZOOM_DIMENSIONS[zoomLevel].h;
 
-        const BASE_CHROME_HEIGHT = 140; // Header + padding + footer (increased for safety)
-        const CHARS_PER_LINE = 94; // Approx for 752px width / ~8px char width
-        const LINE_HEIGHT = 24; // leading-relaxed
+        const BASE_CHROME_HEIGHT = 90; // Reduced to be tighter (Header + Footer + Padding ~ 90px)
 
-        // Handle newlines explicitly
-        const lines = content.split('\n');
-        let totalVisualLines = 0;
+        // Safety check for SSR/Node environment
+        if (typeof document === 'undefined') {
+            return ZOOM_DIMENSIONS[zoomLevel].h;
+        }
 
-        lines.forEach(line => {
-            // Each paragraph is at least 1 line, wraps if longer
-            const lineLength = line.length || 0; // Empty line is height 0? No, usually a newline takes space.
-            // If empty line, it might still take vertical space in whitespace-pre-wrap? Yes.
-            const wrapped = Math.ceil((lineLength || 1) / CHARS_PER_LINE);
-            totalVisualLines += wrapped;
-        });
+        // Create a shadow element for measurement if it doesn't exist
+        let shadowContainer = document.getElementById('node-measurement-shadow');
+        if (!shadowContainer) {
+            shadowContainer = document.createElement('div');
+            shadowContainer.id = 'node-measurement-shadow';
+            shadowContainer.style.position = 'absolute';
+            shadowContainer.style.visibility = 'hidden';
+            shadowContainer.style.height = 'auto';
+            shadowContainer.style.width = '752px'; // 800px - 48px padding
+            shadowContainer.style.top = '-9999px';
+            shadowContainer.style.left = '-9999px';
 
-        const estimatedHeight = BASE_CHROME_HEIGHT + (totalVisualLines * LINE_HEIGHT);
+            // Base styles matching FullNode
+            shadowContainer.style.fontFamily = "'Inter', system-ui, -apple-system, sans-serif";
+            shadowContainer.style.fontSize = '14px';
+            shadowContainer.style.lineHeight = '1.625'; // leading-relaxed
+            shadowContainer.className = "prose prose-sm max-w-none";
 
-        // Clamp between 200 and 1200 to prevent extremes
-        return Math.max(200, Math.min(3000, estimatedHeight));
+            document.body.appendChild(shadowContainer);
+        }
+
+        const trimmedContent = content.trim();
+
+        // Simulate ReactMarkdown rendering
+        // Split by double newlines into paragraphs
+        const paragraphs = trimmedContent.split(/\n\n+/);
+
+        const html = paragraphs.map(p => {
+            // Check if block looks like a list or headers
+            if (p.match(/^(\s*[-*+]|\s*\d+\.)/m) || p.startsWith('#') || p.startsWith('```')) {
+                // Preserve whitespace for lists/code/headers
+                // We use inline pre-wrap to force preservation
+                return `<div style="white-space: pre-wrap; margin-bottom: 1.14em;">${p}</div>`;
+            }
+            // Standard paragraph: collapse single newlines
+            const normalized = p.replace(/\n/g, ' ');
+            return `<p style="margin-bottom: 1.14em; margin-top: 1.14em;">${normalized}</p>`;
+        }).join('');
+
+        shadowContainer.innerHTML = html;
+
+        const measuredHeight = shadowContainer.offsetHeight;
+
+        // Clamp between 200 and 3000
+        return Math.max(200, Math.min(3000, measuredHeight + BASE_CHROME_HEIGHT));
     }
 
     // Temporary storage for layout positions

@@ -59,7 +59,7 @@ export function FullNode({ data }: NodeProps<GraphNode>) {
             <NodeToolbar isVisible={showSummary} position={Position.Right} offset={20}>
                 {showSummary && (
                     <NodeSummaryTooltip
-                        content={treeNode.content}
+                        content={treeNode.summary || treeNode.content}
                     />
                 )}
             </NodeToolbar>

@@ -132,10 +132,12 @@ export function GlassConsole() {
             // 1. Add User Node
             const userNodeId = addNode(targetParentId, 'user', finalContent);
 
-            // Trigger summary generation for User Node
-            generateNodeSummary(finalContent, selectedModel).then(summary => {
-                useTreeStore.getState().setNodeSummary(userNodeId, summary);
-            });
+            // Trigger summary generation for User Node (delayed to avoid rate limits)
+            setTimeout(() => {
+                generateNodeSummary(finalContent, 'lite').then(summary => {
+                    useTreeStore.getState().setNodeSummary(userNodeId, summary);
+                }).catch(err => console.warn('Failed to generate user node summary:', err));
+            }, 2000);
 
             setInput('');
             setIsCollapsed(false); // Reset collapse on send
@@ -146,29 +148,24 @@ export function GlassConsole() {
 
             // 3. Prepare Context
             const getContextContent = () => {
-                const historyTexts: string[] = [];
+                const historyMessages: { role: 'user' | 'model'; content: string }[] = [];
 
-                if (activeSelection) {
-                    const ancestors: string[] = [];
-                    let current: string | null | undefined = targetParentId;
+                // Always walk up from the target parent, regardless of selection or focus state
+                // This ensures we capture the exact lineage we are replying to.
+                let current: string | null | undefined = targetParentId;
 
-                    while (current && nodes[current]) {
-                        ancestors.unshift(nodes[current].content);
-                        current = nodes[current].parentId;
-                    }
-                    historyTexts.push(...ancestors);
-                } else {
-                    const contextIds = [...branchContext];
-                    contextIds.forEach(id => {
-                        const node = nodes[id];
-                        if (node) historyTexts.push(node.content);
+                while (current && nodes[current]) {
+                    const node = nodes[current];
+                    // Unshift to put oldest messages first
+                    historyMessages.unshift({
+                        role: node.role === 'user' ? 'user' : 'model',
+                        content: node.content
                     });
+                    current = node.parentId;
                 }
 
-                // Add the new user message
-                historyTexts.push(finalContent);
-
-                return historyTexts;
+                console.log('Sending Context:', historyMessages);
+                return historyMessages;
             };
 
             const context = getContextContent();
@@ -188,10 +185,12 @@ export function GlassConsole() {
                 },
                 onComplete: (fullText) => {
                     setNodeStatus(assistantNodeId, 'idle');
-                    // Trigger summary generation for Assistant Node
-                    generateNodeSummary(fullText, selectedModel).then(summary => {
-                        useTreeStore.getState().setNodeSummary(assistantNodeId, summary);
-                    });
+                    // Trigger summary generation for Assistant Node (delayed)
+                    setTimeout(() => {
+                        generateNodeSummary(fullText, 'lite').then(summary => {
+                            useTreeStore.getState().setNodeSummary(assistantNodeId, summary);
+                        }).catch(err => console.warn('Failed to generate assistant node summary:', err));
+                    }, 2000);
                 },
                 onError: (err) => {
                     console.error('Streaming error', err);

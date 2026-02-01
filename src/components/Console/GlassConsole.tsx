@@ -10,7 +10,7 @@ export function GlassConsole() {
     const [input, setInput] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showCollapseButton, setShowCollapseButton] = useState(false);
-    const [selectedModel, setSelectedModel] = useState<AppModelType>('lite');
+    const [selectedModel, setSelectedModel] = useState<AppModelType>('fast');
     const [isMenuOpen, setIsMenuOpen] = useState(false); // Menu state
 
     const effectiveParent = useEffectiveParentNode();
@@ -28,7 +28,7 @@ export function GlassConsole() {
     const clearHighlights = useTreeStore((state) => state.clearHighlights);
 
     const handleModelSwitch = useCallback(() => {
-        const models: AppModelType[] = ['debug', 'lite', 'fast', 'pro'];
+        const models: AppModelType[] = ['debug', 'fast', 'pro'];
         const currentIndex = models.indexOf(selectedModel);
         const nextIndex = (currentIndex + 1) % models.length;
         setSelectedModel(models[nextIndex]);

@@ -316,7 +316,7 @@ export function GlassSidebar() {
                         <div className="flex items-start gap-2.5">
                             <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
                             <p className="text-[11px] text-slate-600 leading-relaxed">
-                                <span className="font-semibold text-slate-800">Single RMB</span> branch/nodes to select multiple
+                                <span className="font-semibold text-slate-800">Single RMB</span> nodes to select multiple
                             </p>
                         </div>
                         <div className="flex items-start gap-2.5">
@@ -334,7 +334,13 @@ export function GlassSidebar() {
                         <div className="flex items-start gap-2.5">
                             <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
                             <p className="text-[11px] text-slate-600 leading-relaxed">
-                                <span className="font-semibold text-slate-800">Hover node or select a branch</span> to view a summary
+                                <span className="font-semibold text-slate-800">Hover a node or select a branch</span> to view a summary in top level view
+                            </p>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                                Select a sequence of nodes in a subbranch to use the <span className="font-semibold text-slate-800">prune feature</span>
                             </p>
                         </div>
                     </div>

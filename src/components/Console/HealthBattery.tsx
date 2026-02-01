@@ -4,7 +4,7 @@ interface HealthBatteryProps {
     maxTokens?: number;
 }
 
-export function HealthBattery({ tokenCount, maxTokens = 4000 }: HealthBatteryProps) {
+export function HealthBattery({ tokenCount, maxTokens = 8000 }: HealthBatteryProps) {
     const usagePercentage = Math.min(100, (tokenCount / maxTokens) * 100);
     const batteryLevel = Math.max(0, 100 - usagePercentage);
 

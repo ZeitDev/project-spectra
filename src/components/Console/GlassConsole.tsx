@@ -10,7 +10,7 @@ export function GlassConsole() {
     const [input, setInput] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showCollapseButton, setShowCollapseButton] = useState(false);
-    const [selectedModel, setSelectedModel] = useState<AppModelType>('debug');
+    const [selectedModel, setSelectedModel] = useState<AppModelType>('lite');
     const [isMenuOpen, setIsMenuOpen] = useState(false); // Menu state
 
     const effectiveParent = useEffectiveParentNode();
